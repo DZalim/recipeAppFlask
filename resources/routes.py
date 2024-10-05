@@ -1,6 +1,7 @@
-from resources.auth import RegisterUser
+from resources.auth import RegisterUser, LoginUser
 
 routes = (
     (RegisterUser, "/register"),
+    (LoginUser, "/login"),
 
 )

@@ -10,4 +10,15 @@ class RegisterUser(Resource):
     def post():
         data = request.get_json()
         token = UserManager.register(data)
+
         return {"token": token}, 201
+
+
+class LoginUser(Resource):
+
+    @staticmethod
+    def post():
+        data = request.get_json()
+        token = UserManager.login(data)
+
+        return {"token": token}, 200
