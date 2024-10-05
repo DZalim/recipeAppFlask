@@ -2,6 +2,7 @@ from werkzeug.exceptions import BadRequest
 from werkzeug.security import generate_password_hash
 
 from db import db
+from managers.auth import AuthManager
 from models import UserModel
 
 
@@ -17,6 +18,6 @@ class UserManager:
         try:
             db.session.add(user)
             db.session.flush()  # waits to check if all data is ok to save to multiple tables, if needed
-            return user
+            return AuthManager.encode_token(user)  # create a token in managers/auth.py and return it in resources/auth.py
         except Exception as ex:
             raise BadRequest(str(ex))
