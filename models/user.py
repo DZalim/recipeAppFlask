@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db import db
 from models.enums import UserRoles
@@ -56,3 +56,7 @@ class UserModel(db.Model):
         onupdate=func.now()
     )
 
+    recipes: Mapped[list["RecipeModel"]] = relationship(
+        back_populates='owner',
+        cascade="all, delete-orphan"
+    )
