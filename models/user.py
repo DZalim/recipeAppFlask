@@ -4,10 +4,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db import db
+from models.mixins import TimestampMixinModel
 from models.enums import UserRoles
 
 
-class UserModel(db.Model):
+class UserModel(TimestampMixinModel):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(
@@ -43,17 +44,6 @@ class UserModel(db.Model):
         server_default=UserRoles.beginner.name,
         default=UserRoles.beginner.name,
         nullable=False
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        db.DateTime,
-        server_default=func.now(),
-        default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        db.DateTime,
-        server_default=func.now(),
-        default=func.now(),
-        onupdate=func.now()
     )
 
     recipes: Mapped[list["RecipeModel"]] = relationship(

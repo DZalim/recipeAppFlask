@@ -3,10 +3,13 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_restful import Api
 
-from models.user import *
-
 from db import db
 from resources.routes import routes
+
+# from models.user import *
+# from models.category import *
+# from models.enums import *
+# from models.recipe import *
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')
