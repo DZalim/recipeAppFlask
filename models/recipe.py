@@ -16,6 +16,12 @@ class RecipeModel(TimestampMixinModel):
         nullable=False,
         unique=True
     )
+
+    recipe_photo_url: Mapped[str] = mapped_column(
+        db.String(255),
+        default="No photo",
+    )
+
     difficulty_level: Mapped[RecipeDifficultyLevel] = mapped_column(
         db.Enum(RecipeDifficultyLevel),
         server_default=RecipeDifficultyLevel.easy.name,

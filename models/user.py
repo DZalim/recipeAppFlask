@@ -1,11 +1,8 @@
-from datetime import datetime
-
-from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db import db
-from models.mixins import TimestampMixinModel
 from models.enums import UserRoles
+from models.mixins import TimestampMixinModel
 
 
 class UserModel(TimestampMixinModel):
@@ -37,7 +34,9 @@ class UserModel(TimestampMixinModel):
         nullable=False
     )
     phone: Mapped[str] = mapped_column(
-        db.String(20)
+        db.String(20),
+        default='0000000000',
+        server_default='000000000'
     )
     role: Mapped[UserRoles] = mapped_column(
         db.Enum(UserRoles),

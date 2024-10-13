@@ -40,13 +40,13 @@ class AuthManager:
             raise ex
 
 
-    auth = HTTPTokenAuth(scheme='Bearer')
+auth = HTTPTokenAuth(scheme='Bearer')
 
-    @staticmethod
-    @auth.verify_token
-    def verify_token(token):
-        try:
-            user_id = AuthManager.decode_token(token)
-            return db.session.execute(db.select(UserModel).filter_by(id=user_id)).scalar()
-        except Exception as ex:
-            raise Unauthorized("Invalid or missing token")
+
+@auth.verify_token
+def verify_token(token):
+    try:
+        user_id = AuthManager.decode_token(token)
+        return db.session.execute(db.select(UserModel).filter_by(id=user_id)).scalar()
+    except Exception as ex:
+        raise Unauthorized("Invalid or missing token")
