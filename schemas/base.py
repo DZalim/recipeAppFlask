@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields
 
+
 class BaseRecipeSchema(Schema):
     recipe_name = fields.String(required=True)
     recipe_photo_url = fields.URL(required=False)
@@ -14,3 +15,7 @@ class BaseRecipeSchema(Schema):
 class BaseUserSchema(Schema):
     email = fields.Email(required=True)
     password = fields.String(required=True)
+
+
+class BaseCategorySchema(Schema):
+    category_name = fields.String(required=True)
