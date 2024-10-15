@@ -26,3 +26,8 @@ class PasswordChangeSchema(Schema):
                 "New password cannot be the same as the old password",
                 field_names=["new_password"],
             )
+
+class UserInfoRequestSchema(Schema):
+    first_name = fields.String(required=False)
+    last_name = fields.String(required=False)
+    phone = fields.String(required=False)

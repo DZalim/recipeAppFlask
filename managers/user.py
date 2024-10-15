@@ -19,7 +19,8 @@ class UserManager:
         try:
             db.session.add(user)
             db.session.flush()  # waits to check if all data is ok to save to multiple tables, if needed
-            return AuthManager.encode_token(user)  # create a token in managers/auth.py and return it in resources/auth.py
+            return AuthManager.encode_token(
+                user)  # create a token in managers/auth.py and return it in resources/auth.py
         except Exception as ex:
             raise BadRequest(str(ex))
 
@@ -32,7 +33,7 @@ class UserManager:
             password_is_valid = check_password_hash(user.password, user_data["password"])
 
         if not user or not password_is_valid:
-            raise Unauthorized ("Invalid username or password. Please try again.")
+            raise Unauthorized("Invalid username or password. Please try again.")
 
         return AuthManager.encode_token(user)
 
@@ -55,3 +56,14 @@ class UserManager:
             .where(UserModel.id == current_user.id)
             .values(password=new_password_hash)
         )
+
+    @staticmethod
+    def get_personal_info(username):
+
+        current_user = auth.current_user()
+
+        if username != current_user.username:
+            raise Forbidden("You don not have permissions to access this resource")
+
+        user_info = db.select(UserModel).filter_by(username=username)
+        return db.session.execute(user_info).scalars().all()
