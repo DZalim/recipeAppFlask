@@ -40,26 +40,6 @@ class AuthManager:
         except Exception as ex:
             raise ex
 
-    @staticmethod
-    def change_password(username, password_data):
-        current_user = auth.current_user()
-
-        if username != current_user.username:
-            raise Forbidden("You don not have permissions to access this resource")
-
-        validate_password = check_password_hash(current_user.password, password_data["old_password"])
-
-        if not validate_password:
-            raise NotFound("Wrong or invalid password! Please try again!")
-
-        new_password_hash = generate_password_hash(password_data["new_password"], method='pbkdf2:sha256')
-
-        db.session.execute(
-            db.update(UserModel)
-            .where(UserModel.id == current_user.id)
-            .values(password=new_password_hash)
-        )
-
 
 auth = HTTPTokenAuth(scheme='Bearer')
 

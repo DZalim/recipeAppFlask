@@ -35,6 +35,6 @@ class ChangePassword(Resource):
     @validate_schema(PasswordChangeSchema)
     def put(self, username):
         data = request.get_json()
-        AuthManager.change_password(username, data)
+        UserManager.change_password(username, data)
 
         return "Password has changed"
