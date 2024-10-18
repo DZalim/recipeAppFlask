@@ -1,7 +1,7 @@
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import NotFound, BadRequest
 
 from db import db
-from models import RecipeModel, UserModel
+from models import RecipeModel, UserModel, RecipeDifficultyLevel, CategoryModel
 from models.enums import UserRoles
 
 
@@ -39,3 +39,27 @@ class RecipeManager:
         db.session.flush()
 
         return new_recipe
+
+    @staticmethod
+    def update_recipe_difficulty_or_category(data, recipe_pk):
+        recipe = (db.session.execute(db.select(RecipeModel)
+                                     .filter_by(id=recipe_pk)).scalar())
+
+        if not recipe:
+            raise NotFound("Recipe Not Found")
+
+        if "difficulty_level" in data:
+            db.session.execute(
+                db.update(RecipeModel)
+                .where(RecipeModel.id == recipe.id)
+                .values(difficulty_level=RecipeDifficultyLevel[data["difficulty_level"]])
+            )
+
+            if "category_id" in data:
+                db.session.execute(
+                    db.update(RecipeModel)
+                    .where(RecipeModel.id == recipe.id)
+                    .values(category_id=data["category_id"])
+                )
+
+        return recipe

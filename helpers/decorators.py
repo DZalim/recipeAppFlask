@@ -4,7 +4,9 @@ from flask import request
 from marshmallow import Schema
 from werkzeug.exceptions import Forbidden, BadRequest
 
+from db import db
 from managers.auth import auth
+from models import UserRoles, UserModel
 
 
 def permission_required(*required_roles):
@@ -44,8 +46,40 @@ def validate_logged_user(func):
         current_user = auth.current_user()
 
         if current_user.username != username:
-            raise Forbidden("You do not have permissions to access this resource")
+            raise Forbidden("You do not have permissions to access this resource")  # maybe NOT FOUND????
 
         return func(username, *args, **kwargs)
 
     return wrapper
+
+
+def check_user_role(required_num_of_recipes: int):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            current_user = auth.current_user()
+            current_user_num_of_recipes = len(current_user.recipes)
+
+            if current_user_num_of_recipes >= required_num_of_recipes and current_user.role == UserRoles.beginner:
+                db.session.execute(db.update(UserModel)
+                                   .where(UserModel.id == current_user.id)
+                                   .values(role=UserRoles.advanced))
+            elif current_user_num_of_recipes < required_num_of_recipes and current_user.role == UserRoles.advanced:
+                db.session.execute(db.update(UserModel)
+                                   .where(UserModel.id == current_user.id)
+                                   .values(role=UserRoles.beginner))
+
+            if current_user.role == UserRoles.admin:
+                return func(*args, **kwargs)
+
+            if current_user.role == UserRoles.advanced:
+                data = request.get_json()
+                if "category_id" in data:
+                    raise Forbidden("Advanced users cannot change category_id")
+
+                return func(*args, **kwargs)
+
+            raise Forbidden("You do not have permissions to access this resource")  # remains a beginner
+
+        return wrapper
+
+    return decorator

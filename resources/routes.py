@@ -1,6 +1,6 @@
 from resources.auth import RegisterUser, LoginUser
 from resources.category import CategoryListCreate
-from resources.recipe import RecipeListCreate
+from resources.recipe import RecipeListCreate, RecipeListUpdate
 from resources.user import ChangePassword, PersonalInfo
 
 routes = (
@@ -10,5 +10,6 @@ routes = (
     (ChangePassword, "/<string:username>/change-password"),
     (CategoryListCreate, "/categories"),
     (PersonalInfo, "/<string:username>/personal_info"),
+    (RecipeListUpdate, "/recipe/<int:recipe_pk>")
 
 )
