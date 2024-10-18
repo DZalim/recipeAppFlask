@@ -20,12 +20,12 @@ class PasswordChangeSchema(Schema):
 
     @validates_schema
     def check_same_new_and_old_password(self, data, **kwargs):
-
         if data["old_password"] == data["new_password"]:
             raise ValidationError(
                 "New password cannot be the same as the old password",
                 field_names=["new_password"],
             )
+
 
 class UserInfoRequestSchema(Schema):
     first_name = fields.String(required=False)

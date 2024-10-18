@@ -27,4 +27,6 @@ class CategoryListCreate(Resource):
         data = request.get_json()
         CategoryManager.create_category(data)
 
-        return f"Category with name '{data["category_name"]}' is created", 201
+        category_name = data["category_name"]
+
+        return f"Recipe with name '{category_name}' is created", 201

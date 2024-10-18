@@ -1,4 +1,4 @@
-from werkzeug.exceptions import BadRequest, Unauthorized, Forbidden, NotFound
+from werkzeug.exceptions import BadRequest, Unauthorized, NotFound
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from db import db
@@ -38,11 +38,8 @@ class UserManager:
         return AuthManager.encode_token(user)
 
     @staticmethod
-    def change_password(username, password_data):
+    def change_password(password_data):
         current_user = auth.current_user()
-
-        if username != current_user.username:
-            raise Forbidden("You don not have permissions to access this resource")
 
         validate_password = check_password_hash(current_user.password, password_data["old_password"])
 
@@ -59,11 +56,15 @@ class UserManager:
 
     @staticmethod
     def get_personal_info(username):
-
-        current_user = auth.current_user()
-
-        if username != current_user.username:
-            raise Forbidden("You don not have permissions to access this resource")
-
         user_info = db.select(UserModel).filter_by(username=username)
         return db.session.execute(user_info).scalars().all()
+
+    @staticmethod
+    def update_user_info(username, data):
+
+        for key, value in data.items():
+            db.session.execute(
+                db.update(UserModel)
+                .where(UserModel.username == username)
+                .values(**{key: value})
+            )
