@@ -1,19 +1,34 @@
+from werkzeug.exceptions import NotFound
+
 from db import db
-from models import RecipeModel
+from models import RecipeModel, UserModel
 from models.enums import UserRoles
 
 
 class RecipeManager:
 
     @staticmethod
-    def get_recipes(user):
-        all_recipes = db.select(RecipeModel)
+    def get_recipes(logged_user, username):
+        searched_user_recipes = (db.session.execute(
+            db.select(UserModel)
+            .filter_by(username=username)
+        ).scalar())
 
-        if (user.role == UserRoles.beginner
-                or user.role == UserRoles.advanced):
-            all_recipes = all_recipes.filter_by(user_id=user.id)
+        if logged_user.role == UserRoles.admin:
+            recipes = (db.session.execute(
+                db.select(RecipeModel)
+                .filter_by(user_id=searched_user_recipes.id)
+            ).scalars().all())
+        else:
+            if searched_user_recipes.username != logged_user.username:
+                raise NotFound("Page Not Found")
 
-        return db.session.execute(all_recipes).scalars().all()
+            recipes = (db.session.execute(
+                db.select(RecipeModel)
+                .filter_by(user_id=logged_user.id)
+            ).scalars().all())
+
+        return recipes
 
     @staticmethod
     def create_recipe(data, user_id):
