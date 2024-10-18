@@ -1,3 +1,5 @@
+from functools import wraps
+
 from flask import request
 from marshmallow import Schema
 from werkzeug.exceptions import Forbidden, BadRequest
@@ -34,3 +36,16 @@ def validate_schema(schema_name):
         return wrapper
 
     return decorator
+
+
+def validate_logged_user(func):
+    @wraps(func)
+    def wrapper(username, *args, **kwargs):
+        current_user = auth.current_user()
+
+        if current_user.username != username:
+            raise Forbidden("You do not have permissions to access this resource")
+
+        return func(username, *args, **kwargs)
+
+    return wrapper
