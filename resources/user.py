@@ -39,3 +39,14 @@ class PersonalInfo(Resource):
         UserManager.update_user_info(username, data)
 
         return "Personal info is updated"
+
+
+class DeactivateProfile(Resource):
+
+    @staticmethod
+    @auth.login_required
+    @validate_logged_user
+    def put(username):
+        user = UserManager.deactivate_profile(username)
+
+        return f"{user.username} has been deactivated"

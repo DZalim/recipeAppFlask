@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from db import db
 from managers.auth import AuthManager, auth
-from models import UserModel
+from models import UserModel, ProfileStatus
 
 
 class UserManager:
@@ -55,9 +55,17 @@ class UserManager:
         )
 
     @staticmethod
+    def get_user(username):
+        user = db.session.execute(db.select(UserModel).filter_by(username=username)).scalar()
+
+        if not user:
+            raise NotFound("User not found!")
+
+        return user
+
+    @staticmethod
     def get_personal_info(username):
-        user_info = db.select(UserModel).filter_by(username=username)
-        return db.session.execute(user_info).scalars().all()
+        return UserManager.get_user(username)
 
     @staticmethod
     def update_user_info(username, data):
@@ -68,3 +76,15 @@ class UserManager:
                 .where(UserModel.username == username)
                 .values(**{key: value})
             )
+
+    @staticmethod
+    def deactivate_profile(username):
+        user = UserManager.get_user(username)
+
+        db.session.execute(
+            db.update(UserModel)
+            .where(UserModel.username == username)
+            .values(profile_status=ProfileStatus.inactive)
+        )
+
+        return user
