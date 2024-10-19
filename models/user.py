@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db import db
+from models import ProfileStatus
 from models.enums import UserRoles
 from models.mixins import TimestampMixinModel
 
@@ -43,6 +44,12 @@ class UserModel(TimestampMixinModel):
         server_default=UserRoles.beginner.name,
         default=UserRoles.beginner.name,
         nullable=False
+    )
+
+    profile_status: Mapped[ProfileStatus] = mapped_column(
+        db.Enum(ProfileStatus),
+        server_default=ProfileStatus.active.name,
+        default=ProfileStatus.active.name,
     )
 
     recipes: Mapped[list["RecipeModel"]] = relationship(
