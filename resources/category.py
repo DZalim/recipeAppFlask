@@ -36,9 +36,21 @@ class CategoryListCreate(Resource):
 class CategoryUpdateDelete(Resource):
 
     @staticmethod
+    @auth.login_required
+    @permission_required(UserRoles.admin)
+    @validate_schema(CategoryRequestSchema)
     def put(category_pk):
-        pass
+        data = request.get_json()
+        category = CategoryManager.update_category(category_pk, data)
+        category_name = category.category_name
+
+        return f"Category with id {category_pk} is updated. Category name is: {category_name}", 200
 
     @staticmethod
+    @auth.login_required
+    @permission_required(UserRoles.admin)
     def delete(category_pk):
-        pass
+        category = CategoryManager.delete_category(category_pk)
+        category_name = category.category_name
+
+        return f"Category with name {category_name} is deleted", 200
