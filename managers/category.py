@@ -7,6 +7,15 @@ from models import CategoryModel, RecipeModel
 class CategoryManager:
 
     @staticmethod
+    def create_category(data):
+        new_category = CategoryModel(**data)
+
+        db.session.add(new_category)
+        db.session.flush()
+
+        return new_category
+
+    @staticmethod
     def get_category_by_id(category_id):
         category = (db.session.execute(db.select(CategoryModel)
                                        .filter_by(id=category_id)).scalar())
@@ -18,8 +27,8 @@ class CategoryManager:
 
     @staticmethod
     def get_categories():
-        all_categories = db.select(CategoryModel)
-        return db.session.execute(all_categories).scalars().all()
+        all_categories = db.session.execute(db.select(CategoryModel)).scalars().all()
+        return all_categories
 
     @staticmethod
     def get_category_recipes(category_id):
@@ -31,15 +40,6 @@ class CategoryManager:
             return "This category does not have any recipes"
 
         return category_recipes
-
-    @staticmethod
-    def create_category(data):
-        new_category = CategoryModel(**data)
-
-        db.session.add(new_category)
-        db.session.flush()
-
-        return new_category
 
     @staticmethod
     def update_category(category_id, data):
@@ -56,6 +56,8 @@ class CategoryManager:
     @staticmethod
     def delete_category(category_id):
         category = CategoryManager.get_category_by_id(category_id)
+
         db.session.delete(category)
         db.session.flush()
+
         return category
