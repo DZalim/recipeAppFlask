@@ -2,7 +2,7 @@ from functools import wraps
 
 from flask import request
 from marshmallow import Schema
-from werkzeug.exceptions import Forbidden, BadRequest
+from werkzeug.exceptions import Forbidden, BadRequest, NotFound
 
 from db import db
 from managers.auth import auth
@@ -46,7 +46,7 @@ def validate_logged_user(func):
         current_user = auth.current_user()
 
         if current_user.username != username:
-            raise Forbidden("You do not have permissions to access this resource")  # maybe NOT FOUND????
+            raise NotFound("User not found")
 
         return func(username, *args, **kwargs)
 
@@ -63,6 +63,7 @@ def check_user_role(required_num_of_recipes: int):
                 db.session.execute(db.update(UserModel)
                                    .where(UserModel.id == current_user.id)
                                    .values(role=UserRoles.advanced))
+
             elif current_user_num_of_recipes < required_num_of_recipes and current_user.role == UserRoles.advanced:
                 db.session.execute(db.update(UserModel)
                                    .where(UserModel.id == current_user.id)
@@ -78,7 +79,7 @@ def check_user_role(required_num_of_recipes: int):
 
                 return func(*args, **kwargs)
 
-            raise Forbidden("You do not have permissions to access this resource")  # remains a beginner
+            raise Forbidden("You do not have permissions to access this resource")  # remains a beginner user
 
         return wrapper
 
