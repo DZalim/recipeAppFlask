@@ -34,6 +34,14 @@ class RecipeListCreate(Resource):
 
 
 class RecipeListUpdate(Resource):
+
+    @staticmethod
+    def get(recipe_pk):
+        recipe = RecipeManager.get_recipe(recipe_pk)
+
+        return ResponseRecipeSchema().dump(recipe)
+
+
     @staticmethod
     @auth.login_required
     @check_user_role(5)

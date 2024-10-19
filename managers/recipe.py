@@ -1,7 +1,7 @@
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import NotFound
 
 from db import db
-from models import RecipeModel, UserModel, RecipeDifficultyLevel, CategoryModel
+from models import RecipeModel, UserModel, RecipeDifficultyLevel
 from models.enums import UserRoles
 
 
@@ -31,6 +31,16 @@ class RecipeManager:
         return recipes
 
     @staticmethod
+    def get_recipe(recipe_id):
+        recipe = (db.session.execute(db.select(RecipeModel)
+                                     .filter_by(id=recipe_id)).scalar())
+
+        if not recipe:
+            raise NotFound("Recipe Not Found")
+
+        return recipe
+
+    @staticmethod
     def create_recipe(data, user_id):
         data["user_id"] = user_id
         new_recipe = RecipeModel(**data)
@@ -40,13 +50,8 @@ class RecipeManager:
 
         return new_recipe
 
-    @staticmethod
-    def update_recipe_difficulty_or_category(data, recipe_pk):
-        recipe = (db.session.execute(db.select(RecipeModel)
-                                     .filter_by(id=recipe_pk)).scalar())
-
-        if not recipe:
-            raise NotFound("Recipe Not Found")
+    def update_recipe_difficulty_or_category(self, data, recipe_pk):
+        recipe = self.get_recipe(recipe_pk)
 
         if "difficulty_level" in data:
             db.session.execute(
@@ -55,11 +60,11 @@ class RecipeManager:
                 .values(difficulty_level=RecipeDifficultyLevel[data["difficulty_level"]])
             )
 
-            if "category_id" in data:
-                db.session.execute(
-                    db.update(RecipeModel)
-                    .where(RecipeModel.id == recipe.id)
-                    .values(category_id=data["category_id"])
-                )
+        if "category_id" in data:
+            db.session.execute(
+                db.update(RecipeModel)
+                .where(RecipeModel.id == recipe.id)
+                .values(category_id=data["category_id"])
+            )
 
         return recipe
