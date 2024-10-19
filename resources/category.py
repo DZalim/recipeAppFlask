@@ -7,6 +7,7 @@ from managers.category import CategoryManager
 from models import UserRoles
 from schemas.request.category import CategoryRequestSchema
 from schemas.response.category import CategoryResponseSchema
+from schemas.response.recipe import ResponseRecipeSchema
 
 
 class CategoryListCreate(Resource):
@@ -54,3 +55,13 @@ class CategoryUpdateDelete(Resource):
         category_name = category.category_name
 
         return f"Category with name {category_name} is deleted", 200
+
+
+class CategoryRecipesList(Resource):
+    @staticmethod
+    def get(category_pk):
+        category_recipes = CategoryManager.get_category_recipes(category_pk)
+
+        if isinstance(category_recipes, str):
+            return category_recipes, 200
+        return ResponseRecipeSchema().dump(category_recipes, many=True), 200

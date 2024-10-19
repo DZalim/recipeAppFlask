@@ -1,8 +1,7 @@
-from unicodedata import category
 from werkzeug.exceptions import NotFound
 
 from db import db
-from models import CategoryModel
+from models import CategoryModel, RecipeModel
 
 
 class CategoryManager:
@@ -10,7 +9,7 @@ class CategoryManager:
     @staticmethod
     def get_category_by_id(category_id):
         category = (db.session.execute(db.select(CategoryModel)
-                                     .filter_by(id=category_id)).scalar())
+                                       .filter_by(id=category_id)).scalar())
 
         if not category:
             raise NotFound("Category Not Found")
@@ -21,6 +20,17 @@ class CategoryManager:
     def get_categories():
         all_categories = db.select(CategoryModel)
         return db.session.execute(all_categories).scalars().all()
+
+    @staticmethod
+    def get_category_recipes(category_id):
+        category = CategoryManager.get_category_by_id(category_id)
+
+        category_recipes = (db.session.execute(db.select(RecipeModel)
+                                               .filter_by(category_id=category.id)).scalars().all())
+        if not category_recipes:
+            return "This category does not have any recipes"
+
+        return category_recipes
 
     @staticmethod
     def create_category(data):
