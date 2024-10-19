@@ -5,7 +5,7 @@ from helpers.decorators import permission_required, validate_schema, validate_lo
 from managers.auth import auth
 from managers.recipe import RecipeManager
 from models.enums import UserRoles
-from schemas.request.recipe import RequestRecipeSchema, RecipeUpdateRequestSchema
+from schemas.request.recipe import RequestRecipeSchema, RecipeUpdateRequestSchema, RecipeUpdate2RequestSchema
 from schemas.response.recipe import ResponseRecipeSchema
 
 
@@ -41,7 +41,6 @@ class RecipeListUpdate(Resource):
 
         return ResponseRecipeSchema().dump(recipe)
 
-
     @staticmethod
     @auth.login_required
     @check_user_role(5)
@@ -51,4 +50,25 @@ class RecipeListUpdate(Resource):
         recipe = RecipeManager.update_recipe_difficulty_or_category(data, recipe_pk)
         recipe_name = recipe.recipe_name
 
-        return f"Recipe with name '{recipe_name}' is updated", 201
+        return f"Recipe with name '{recipe_name}' is updated", 200
+
+
+class RecipeUpdateDelete(Resource):
+
+    @staticmethod
+    @auth.login_required
+    @validate_logged_user
+    @validate_schema(RecipeUpdate2RequestSchema)
+    def put(username, recipe_pk):
+        data = request.get_json()
+        updated_fields = RecipeManager.update_own_recipe(recipe_pk, data)
+
+        return f"The fields {', '.join(field for field in updated_fields)} is updated", 200
+
+    @staticmethod
+    @auth.login_required
+    @validate_logged_user
+    def delete(username, recipe_pk):
+        recipe = RecipeManager.delete_own_recipe(recipe_pk, username)
+        recipe_name = recipe.recipe_name
+        return f"The recipe with name '{recipe_name}' is deleted", 200

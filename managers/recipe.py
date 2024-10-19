@@ -50,8 +50,9 @@ class RecipeManager:
 
         return new_recipe
 
-    def update_recipe_difficulty_or_category(self, data, recipe_pk):
-        recipe = self.get_recipe(recipe_pk)
+    @staticmethod
+    def update_recipe_difficulty_or_category(data, recipe_pk):
+        recipe = RecipeManager.get_recipe(recipe_pk)
 
         if "difficulty_level" in data:
             db.session.execute(
@@ -67,4 +68,37 @@ class RecipeManager:
                 .values(category_id=data["category_id"])
             )
 
+        return recipe
+
+    @staticmethod
+    def update_own_recipe(recipe_pk, data):
+
+        recipe = RecipeManager.get_recipe(recipe_pk)
+
+        updated_fields = []
+
+        for key, value in data.items():
+            db.session.execute(
+                db.update(RecipeModel)
+                .where(RecipeModel.id == recipe.id)
+                .values(**{key: value})
+            )
+
+            updated_fields.append(key)
+
+        return updated_fields
+
+    @staticmethod
+    def delete_own_recipe(recipe_pk, username):
+        recipe_owner = (db.session.execute(db.select(UserModel)
+                                           .join(UserModel.recipes)
+                                           .filter(RecipeModel.id == recipe_pk))
+                        .scalar())
+
+        if not recipe_owner or recipe_owner.username != username:
+            raise NotFound("No user with this recipe")
+
+        recipe = RecipeManager.get_recipe(recipe_pk)
+        db.session.delete(recipe)
+        db.session.flush()
         return recipe

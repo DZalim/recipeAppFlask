@@ -20,13 +20,25 @@ class CategoryListCreate(Resource):
 
         return result
 
+    @staticmethod
     @auth.login_required
     @permission_required(UserRoles.admin)
     @validate_schema(CategoryRequestSchema)
-    def post(self):
+    def post():
         data = request.get_json()
         CategoryManager.create_category(data)
 
         category_name = data["category_name"]
 
         return f"Recipe with name '{category_name}' is created", 201
+
+
+class CategoryUpdateDelete(Resource):
+
+    @staticmethod
+    def put(category_pk):
+        pass
+
+    @staticmethod
+    def delete(category_pk):
+        pass

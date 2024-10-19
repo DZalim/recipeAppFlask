@@ -21,3 +21,12 @@ class RecipeUpdateRequestSchema(Schema):
                                            .filter_by(id=data["category_id"])).scalar())
             if not category:
                 raise ValidationError("Category Not Found")
+
+class RecipeUpdate2RequestSchema(Schema):
+    recipe_name = fields.String(required=False)
+    recipe_photo_url = fields.URL(required=False)
+    portions = fields.Integer(required=False)
+    preparing_time_in_minutes = fields.Integer(required=False)
+    cooking_time_in_minutes = fields.Integer(required=False)
+    ingredients = fields.String(required=False)
+    description = fields.String(required=False)
