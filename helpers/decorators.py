@@ -6,6 +6,7 @@ from werkzeug.exceptions import Forbidden, BadRequest, NotFound
 
 from db import db
 from managers.auth import auth
+from managers.comment import CommentManager
 from models import UserRoles, UserModel, RecipeModel
 
 
@@ -98,5 +99,17 @@ def validate_existing_user_with_recipe(func):
             raise NotFound("No user with this recipe")
 
         return func(username, recipe_pk, *args, **kwargs)
+
+    return wrapper
+
+
+def validate_existing_comment_and_recipe(func):
+    @wraps(func)
+    def wrapper(recipe_pk, comment_pk, *args, **kwargs):
+        comment = CommentManager.get_comment(comment_pk)
+        if recipe_pk != comment.recipe_id:
+            raise NotFound("Recipe with this comment does not exist")
+
+        return func(recipe_pk, comment_pk, *args, **kwargs)
 
     return wrapper

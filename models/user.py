@@ -56,3 +56,8 @@ class UserModel(TimestampMixinModel):
         back_populates='owner',
         cascade="all, delete-orphan"
     )
+
+    comments: Mapped[list["CommentModel"]] = relationship(
+        back_populates='user',
+        cascade="all, delete-orphan"
+    )

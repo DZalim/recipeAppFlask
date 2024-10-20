@@ -1,8 +1,9 @@
 from werkzeug.exceptions import NotFound
 
 from db import db
-from models import RecipeModel, UserModel, RecipeDifficultyLevel
-from models.enums import UserRoles
+from models.enums import UserRoles, RecipeDifficultyLevel
+from models.recipe import RecipeModel
+from models.user import UserModel
 
 
 class RecipeManager:

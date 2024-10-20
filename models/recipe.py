@@ -54,3 +54,8 @@ class RecipeModel(TimestampMixinModel):
 
     user_id: Mapped[int] = mapped_column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     owner: Mapped['UserModel'] = relationship(back_populates='recipes')
+
+    comments: Mapped[list["CommentModel"]] = relationship(
+        back_populates='recipe',
+        cascade="all, delete-orphan"
+    )

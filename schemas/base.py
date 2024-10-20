@@ -94,3 +94,7 @@ class UserPersonalInfoSchema(Schema):
             missing = [field for field in required_fields if field not in data]
             if missing:
                 raise ValidationError(f"Missing required fields: {', '.join(missing)}")
+
+
+class BaseCommentSchema(Schema):
+    description = fields.String(required=True)
