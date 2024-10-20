@@ -1,19 +1,55 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validates_schema, ValidationError, validates
+from marshmallow_enum import EnumField
+
+from db import db
+from models import RecipeModel, RecipeDifficultyLevel, CategoryModel
 
 
 class BaseCategorySchema(Schema):
     category_name = fields.String(required=True)
 
 
-class BaseRecipeSchema(Schema):
-    recipe_name = fields.String(required=True)
-    recipe_photo_url = fields.URL(required=False)
-    portions = fields.Integer(required=True)
-    preparing_time_in_minutes = fields.Integer(required=True)
-    cooking_time_in_minutes = fields.Integer(required=True)
-    ingredients = fields.String(required=True)
-    description = fields.String(required=True)
-    category_id = fields.Integer(required=True)
+class RecipeUpdateRequestSchema(Schema):
+    category_id = fields.Integer(required=False)
+    difficulty_level = EnumField(RecipeDifficultyLevel, by_value=True, required=False)
+
+    @validates_schema
+    def validate_category_id(self, data, **kwargs):
+        if data.get("category_id"):
+            category = (db.session.execute(db.select(CategoryModel)
+                                           .filter_by(id=data["category_id"])).scalar())
+            if not category:
+                raise ValidationError("Category Not Found")
+
+
+class BaseRecipeSchema(RecipeUpdateRequestSchema):
+    recipe_name = fields.String()
+    portions = fields.Integer()
+    photo_url = fields.URL(required=False)
+    preparing_time_in_minutes = fields.Integer()
+    cooking_time_in_minutes = fields.Integer()
+    ingredients = fields.String()
+    description = fields.String()
+
+    @validates_schema
+    def validate_required_fields(self, data, **kwargs):
+
+        if self.context.get('request_type') == 'create':
+            required_fields = [
+                'recipe_name', 'portions', 'preparing_time_in_minutes', 'cooking_time_in_minutes',
+                'ingredients', 'description', 'category_id']
+            missing = [field for field in required_fields if field not in data]
+            if missing:
+                raise ValidationError(f"Missing required fields: {', '.join(missing)}")
+
+    @validates("recipe_name")
+    def validate_same_recipe_name(self, value):
+        recipe = (db.session.execute(db.select(RecipeModel)
+                                     .filter_by(recipe_name=value)).scalar())
+
+        if recipe:
+            raise ValidationError("A recipe with the same name already exists. "
+                                  "Please choose another name for your recipe!")
 
 
 class BaseUserSchema(Schema):

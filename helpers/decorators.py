@@ -6,7 +6,7 @@ from werkzeug.exceptions import Forbidden, BadRequest, NotFound
 
 from db import db
 from managers.auth import auth
-from models import UserRoles, UserModel
+from models import UserRoles, UserModel, RecipeModel
 
 
 def permission_required(*required_roles):
@@ -84,3 +84,19 @@ def check_user_role(required_num_of_recipes: int):
         return wrapper
 
     return decorator
+
+
+def validate_existing_user_with_recipe(func):
+    @wraps(func)
+    def wrapper(username, recipe_pk, *args, **kwargs):
+        recipe_owner = (db.session.execute(db.select(UserModel)
+                                           .join(UserModel.recipes)
+                                           .filter(RecipeModel.id == recipe_pk))
+                        .scalar())
+
+        if not recipe_owner or recipe_owner.username != username:
+            raise NotFound("No user with this recipe")
+
+        return func(username, recipe_pk, *args, **kwargs)
+
+    return wrapper

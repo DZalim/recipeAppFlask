@@ -72,7 +72,6 @@ class RecipeManager:
 
     @staticmethod
     def update_own_recipe(recipe_pk, data):
-
         recipe = RecipeManager.get_recipe(recipe_pk)
 
         updated_fields = []
@@ -89,16 +88,10 @@ class RecipeManager:
         return updated_fields
 
     @staticmethod
-    def delete_own_recipe(recipe_pk, username):
-        recipe_owner = (db.session.execute(db.select(UserModel)
-                                           .join(UserModel.recipes)
-                                           .filter(RecipeModel.id == recipe_pk))
-                        .scalar())
-
-        if not recipe_owner or recipe_owner.username != username:
-            raise NotFound("No user with this recipe")
-
+    def delete_own_recipe(recipe_pk):
         recipe = RecipeManager.get_recipe(recipe_pk)
+
         db.session.delete(recipe)
         db.session.flush()
+
         return recipe
