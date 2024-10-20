@@ -10,17 +10,14 @@ class UserManager:
 
     @staticmethod
     def register(user_data):
-        # hash the submitted registration password
-        user_data['password'] = generate_password_hash(user_data['password'], method='pbkdf2:sha256')
 
-        # instantiate a user model
+        user_data['password'] = generate_password_hash(user_data['password'], method='pbkdf2:sha256')
         user = UserModel(**user_data)
 
         try:
             db.session.add(user)
-            db.session.flush()  # waits to check if all data is ok to save to multiple tables, if needed
-            return AuthManager.encode_token(
-                user)  # create a token in managers/auth.py and return it in resources/auth.py
+            db.session.flush()
+            return AuthManager.encode_token(user)
         except Exception as ex:
             raise BadRequest(str(ex))
 
@@ -33,26 +30,9 @@ class UserManager:
             password_is_valid = check_password_hash(user.password, user_data["password"])
 
         if not user or not password_is_valid:
-            raise Unauthorized("Invalid username or password. Please try again.")
+            raise Unauthorized("Invalid email or password. Please try again.")
 
         return AuthManager.encode_token(user)
-
-    @staticmethod
-    def change_password(password_data):
-        current_user = auth.current_user()
-
-        validate_password = check_password_hash(current_user.password, password_data["old_password"])
-
-        if not validate_password:
-            raise NotFound("Wrong or invalid password! Please try again!")
-
-        new_password_hash = generate_password_hash(password_data["new_password"], method='pbkdf2:sha256')
-
-        db.session.execute(
-            db.update(UserModel)
-            .where(UserModel.id == current_user.id)
-            .values(password=new_password_hash)
-        )
 
     @staticmethod
     def get_user(username):
@@ -76,6 +56,23 @@ class UserManager:
                 .where(UserModel.username == username)
                 .values(**{key: value})
             )
+
+    @staticmethod
+    def change_password(password_data):
+        current_user = auth.current_user()
+
+        validate_password = check_password_hash(current_user.password, password_data["old_password"])
+
+        if not validate_password:
+            raise NotFound("Wrong or invalid password! Please try again!")
+
+        new_password_hash = generate_password_hash(password_data["new_password"], method='pbkdf2:sha256')
+
+        db.session.execute(
+            db.update(UserModel)
+            .where(UserModel.id == current_user.id)
+            .values(password=new_password_hash)
+        )
 
     @staticmethod
     def deactivate_profile(username):

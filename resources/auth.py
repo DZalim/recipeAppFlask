@@ -3,7 +3,7 @@ from flask_restful import Resource
 
 from helpers.decorators import validate_schema
 from managers.user import UserManager
-from schemas.request.user import UserLoginSchema, UserRegisterSchema
+from schemas.request.user import UserRegisterSchema
 
 
 class RegisterUser(Resource):
@@ -20,7 +20,6 @@ class RegisterUser(Resource):
 class LoginUser(Resource):
 
     @staticmethod
-    @validate_schema(UserLoginSchema)
     def post():
         data = request.get_json()
         token = UserManager.login(data)
