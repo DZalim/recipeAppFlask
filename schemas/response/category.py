@@ -1,9 +1,8 @@
 from marshmallow import fields
 
-from schemas.base import BaseCategorySchema
+from schemas.base.category import BaseCategorySchema
+from schemas.base.mixin import DateTimeSchema
 
 
-class CategoryResponseSchema(BaseCategorySchema):
+class CategoryResponseSchema(BaseCategorySchema, DateTimeSchema):
     id = fields.Integer(required=False)
-    created_at = fields.Date(required=False)
-    updated_at = fields.Date(required=False)

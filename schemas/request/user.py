@@ -3,7 +3,8 @@ from marshmallow import fields, Schema, validates_schema, ValidationError, valid
 from db import db
 from helpers.validators import validate_password, validate_spaces_factory
 from models import UserModel
-from schemas.base import BaseUserSchema, UserPersonalInfoSchema
+from schemas.base.user import BaseUserSchema, UserPersonalInfoSchema
+from schemas.request.photo import PhotoRequestSchema
 
 
 class UserLoginSchema(BaseUserSchema):
@@ -26,7 +27,6 @@ class UserRegisterSchema(UserPersonalInfoSchema, BaseUserSchema):
 
     @validates('username')
     def validate_username(self, value):
-
         user = (db.session.execute(db.select(UserModel)
                                    .filter_by(username=value)).scalar())
 
@@ -35,8 +35,7 @@ class UserRegisterSchema(UserPersonalInfoSchema, BaseUserSchema):
                                   "Please enter another username.")
 
 
-
-class UserInfoUpdateRequestSchema(UserPersonalInfoSchema):
+class UserInfoUpdateRequestSchema(UserPersonalInfoSchema, PhotoRequestSchema):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

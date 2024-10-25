@@ -16,17 +16,11 @@ class RecipeModel(TimestampMixinModel):
         nullable=False,
         unique=True
     )
-
-    recipe_photo_url: Mapped[str] = mapped_column(
-        db.String(255),
-        default="No photo",
-    )
-
     difficulty_level: Mapped[RecipeDifficultyLevel] = mapped_column(
         db.Enum(RecipeDifficultyLevel),
+        nullable=False,
         server_default=RecipeDifficultyLevel.easy.name,
         default=RecipeDifficultyLevel.easy.name,
-        nullable=False
     )
     portions: Mapped[int] = mapped_column(
         db.Integer,
@@ -43,7 +37,7 @@ class RecipeModel(TimestampMixinModel):
     ingredients: Mapped[str] = mapped_column(
         db.Text,
         nullable=False,
-    )  # must be entered with a comma and a space for frontend
+    )  # must be entered with a semicolon(;) for frontend
     description: Mapped[str] = mapped_column(
         db.Text,
         nullable=False,
@@ -56,6 +50,11 @@ class RecipeModel(TimestampMixinModel):
     owner: Mapped['UserModel'] = relationship(back_populates='recipes')
 
     comments: Mapped[list["CommentModel"]] = relationship(
+        back_populates='recipe',
+        cascade="all, delete-orphan"
+    )
+
+    photos: Mapped[list["RecipePhotosModel"]] = relationship(
         back_populates='recipe',
         cascade="all, delete-orphan"
     )

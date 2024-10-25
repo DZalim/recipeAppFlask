@@ -1,10 +1,9 @@
 from marshmallow import fields
 
-from schemas.base import BaseRecipeSchema
+from schemas.base.mixin import DateTimeSchema
+from schemas.base.recipe import BaseRecipeSchema
 
 
-class ResponseRecipeSchema(BaseRecipeSchema):
+class ResponseRecipeSchema(BaseRecipeSchema, DateTimeSchema):
     id = fields.Integer(required=False)
     user_id = fields.Integer(required=False)
-    created_at = fields.DateTime(required=False)
-    updated_at = fields.DateTime(required=False)

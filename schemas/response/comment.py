@@ -1,11 +1,10 @@
 from marshmallow import fields
 
-from schemas.base import BaseCommentSchema
+from schemas.base.comment import BaseCommentSchema
+from schemas.base.mixin import DateTimeSchema
 
 
-class ResponseCommentSchema(BaseCommentSchema):
+class ResponseCommentSchema(BaseCommentSchema, DateTimeSchema):
     comment_id = fields.Integer()
-    created_at = fields.DateTime()
-    updated_at = fields.DateTime()
     user_id = fields.Integer()
     recipe_id = fields.Integer()

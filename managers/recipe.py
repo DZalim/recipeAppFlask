@@ -1,6 +1,7 @@
 from werkzeug.exceptions import NotFound
 
 from db import db
+from managers.photo import PhotoManager
 from models.enums import UserRoles, RecipeDifficultyLevel
 from models.recipe import RecipeModel
 from models.user import UserModel
@@ -43,11 +44,20 @@ class RecipeManager:
 
     @staticmethod
     def create_recipe(data, user_id):
+
+        try:
+            encoded_photo = data.pop("photo")
+            extension = data.pop("photo_extension")
+            photo_url = PhotoManager().create_photo_url(encoded_photo, extension, "recipe")
+        except KeyError:
+            photo_url = None
+
         data["user_id"] = user_id
         new_recipe = RecipeModel(**data)
-
         db.session.add(new_recipe)
         db.session.flush()
+
+        PhotoManager().create_photo(photo_url, new_recipe.id, "recipe") if photo_url else None
 
         return new_recipe
 
@@ -70,6 +80,15 @@ class RecipeManager:
             )
 
         return recipe
+
+    @staticmethod
+    def add_recipe_photo(data, recipe_pk):
+        photo = data["photo"]
+        extension = data["photo_extension"]
+        photo_url = PhotoManager().create_photo_url(photo, extension, "recipe")
+        created_photo = PhotoManager().create_photo(photo_url, recipe_pk, "recipe")
+
+        return created_photo
 
     @staticmethod
     def update_own_recipe(recipe_pk, data):

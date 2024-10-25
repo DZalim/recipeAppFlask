@@ -4,10 +4,12 @@ from flask_restful import Resource
 from helpers.decorators import permission_required, validate_schema, validate_logged_user, check_user_role, \
     validate_existing_user_with_recipe
 from managers.auth import auth
+from managers.photo import PhotoManager
 from managers.recipe import RecipeManager
 from models.enums import UserRoles
-from schemas.base import RecipeUpdateRequestSchema
+from schemas.base.recipe import RecipeUpdateRequestSchema
 from schemas.request.recipe import CreateRecipeRequestSchema, UpdateRecipeRequestSchema
+from schemas.response.photo import RecipePhotoResponseSchema
 from schemas.response.recipe import ResponseRecipeSchema
 
 
@@ -55,6 +57,36 @@ class RecipeUpdateDelete(Resource):
     def delete(username, recipe_pk):
         recipe = RecipeManager.delete_own_recipe(recipe_pk)
         return f"Recipe named '{recipe.recipe_name}' has been deleted", 200
+
+
+class RecipePhotosList(Resource):
+    @staticmethod
+    def get(recipe_pk):
+        recipe_photo = PhotoManager().get_photo(recipe_pk, "recipe")
+        return RecipePhotoResponseSchema(many=True).dump(recipe_photo) if recipe_photo \
+            else "No photos added"
+
+
+class RecipePhotoCreate(Resource):
+    @staticmethod
+    @auth.login_required
+    @validate_logged_user
+    @validate_existing_user_with_recipe
+    def post(username, recipe_pk):
+        data = request.get_json()
+        created_photo = RecipeManager.add_recipe_photo(data, recipe_pk)
+
+        return RecipePhotoResponseSchema().dump(created_photo)
+
+
+class RecipePhotoDelete(Resource):
+    @staticmethod
+    @auth.login_required
+    @validate_logged_user
+    @validate_existing_user_with_recipe
+    def delete(username, recipe_pk, photo_pk):
+        info = PhotoManager().delete_photo(recipe_pk, "recipe", photo_pk)
+        return info
 
 
 class RecipeListUpdate(Resource):

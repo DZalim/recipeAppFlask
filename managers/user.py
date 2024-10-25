@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from db import db
 from managers.auth import AuthManager, auth
+from managers.photo import PhotoManager
 from models import UserModel, ProfileStatus
 
 
@@ -17,6 +18,7 @@ class UserManager:
         try:
             db.session.add(user)
             db.session.flush()
+
             return AuthManager.encode_token(user)
         except Exception as ex:
             raise BadRequest(str(ex))
@@ -46,6 +48,18 @@ class UserManager:
     @staticmethod
     def get_personal_info(username):
         return UserManager.get_user(username)
+
+    @staticmethod
+    def add_user_photo(username, data):
+        user_id = UserManager.get_user(username).id
+        existing_photo = PhotoManager().get_photo(user_id, "user")
+        if existing_photo:
+            raise BadRequest("You cannot add another profile picture")
+
+        photo_url = PhotoManager().create_photo_url(data["photo"], data["photo_extension"], "user")
+        photo_model = PhotoManager().create_photo(photo_url, user_id, "user")
+
+        return photo_model
 
     @staticmethod
     def update_user_info(username, data):

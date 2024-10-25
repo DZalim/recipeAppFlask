@@ -1,6 +1,4 @@
-from marshmallow import fields
-
-from schemas.base import BaseCommentSchema
+from schemas.base.comment import BaseCommentSchema
 
 
 class RequestCommentSchema(BaseCommentSchema):

@@ -2,7 +2,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db import db
 from models import TimestampMixinModel
-from models import UserModel
 
 
 class CommentModel(TimestampMixinModel):
