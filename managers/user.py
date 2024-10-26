@@ -5,6 +5,9 @@ from db import db
 from managers.auth import AuthManager, auth
 from managers.photo import PhotoManager
 from models import UserModel, ProfileStatus
+from services.sendgrid import SendGridService
+
+sendgrid = SendGridService()
 
 
 class UserManager:
@@ -18,6 +21,15 @@ class UserManager:
         try:
             db.session.add(user)
             db.session.flush()
+
+            sendgrid.send_email(
+                recipient=["ilearntosendmails@mail.bg"],  # here it can be a user's email (user.email)
+                subject=f"Welcome to our delicious country {user.first_name} {user.last_name}",
+                content=f"Hello {user.username},\n "
+                        f"We expect your delicious recipes to reach a wide range of people.\n"
+                        f"Best Regards,\n"
+                        f"Delicious Recipe"
+            )
 
             return AuthManager.encode_token(user)
         except Exception as ex:
@@ -52,7 +64,8 @@ class UserManager:
     @staticmethod
     def add_user_photo(username, data):
         user_id = UserManager.get_user(username).id
-        existing_photo = PhotoManager().get_photo(user_id, "user")
+        existing_photo = PhotoManager().get_photo(user_id, "user").first()
+
         if existing_photo:
             raise BadRequest("You cannot add another profile picture")
 

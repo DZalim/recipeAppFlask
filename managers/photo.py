@@ -31,6 +31,9 @@ class PhotoManager:
         decode_photo(path, encoded_photo)
         photo_url = cloudinary.upload_photo(path, extension)
 
+        if os.path.exists(path):
+            os.remove(path)
+
         return photo_url
 
     def create_photo(self, photo_url, related_id, photo_type):
@@ -49,7 +52,7 @@ class PhotoManager:
         id_key = self.PHOTO_INFO[photo_type]["id_key"]
 
         photo = (db.session.execute(db.select(photo_model_class)
-                                    .filter_by(**{id_key: related_id})).scalars().first())
+                                    .filter_by(**{id_key: related_id})).scalars())
 
         return photo
 
@@ -68,7 +71,7 @@ class PhotoManager:
     @staticmethod
     def delete_photo(related_id, photo_type, photo_id=None):
         if photo_type == "user":
-            photo = PhotoManager().get_photo(related_id, photo_type)
+            photo = PhotoManager().get_photo(related_id, photo_type).first()
         else:
             photo = PhotoManager.get_photo_by_id(photo_id, related_id)
 

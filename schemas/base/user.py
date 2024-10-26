@@ -22,7 +22,10 @@ class BaseUserSchema(Schema):
 
         if user:
             raise ValidationError("A user with the same email already exists. "
-                                  "Could it be that you disabled your account?")
+                                  "Could it be that you disabled your account? "
+                                  "Please use a different email address "
+                                  "or click Forgot Password"
+                                  )
 
 
 class UserPersonalInfoSchema(Schema):

@@ -1,9 +1,9 @@
 from resources.auth import RegisterUser, LoginUser
 from resources.category import CategoryListCreate, CategoryUpdateDelete, CategoryRecipesList
 from resources.comment import RecipeComments, RecipeCommentUpdateDelete
-from resources.recipe import RecipeListCreate, RecipeListUpdate, RecipeUpdateDelete, RecipePhotoCreate, \
-    RecipePhotosList, RecipePhotoDelete
-from resources.user import ChangePassword, PersonalInfo, DeactivateProfile, UserPhoto
+from resources.photo import UserPhoto, RecipePhotoCreate, RecipePhotoDelete, RecipePhotosList
+from resources.recipe import RecipeListCreate, RecipeListUpdate, RecipeUpdateDelete
+from resources.user import ChangePassword, PersonalInfo, DeactivateProfile
 
 routes = (
     (RegisterUser, "/register"),
