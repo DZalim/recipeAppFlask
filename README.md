@@ -7,7 +7,7 @@ It includes features for user authentication, profile management, recipe and cat
 ## Table of Contents
 - [Features](#features)
 - [Technologies Used](#technologies-used)
-- [Setup Instructions](#setup-ins)
+- [Setup Instructions](#setup-instructions)
 - [Endpoints](#endpoints)
   - [User Management](#user-management)
   - [Category Management](#category-management)
