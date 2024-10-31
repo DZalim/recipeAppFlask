@@ -81,7 +81,7 @@ It includes features for user authentication, profile management, recipe and cat
     flask run
     ```
 
-9. **Test API**: After starting the server, you can interact with the API via HTTP requests or using tools like Postman. Refer to the Endpoints section for specific routes and request methods.
+9. **Test API**: After starting the server, you can interact with the API via HTTP requests or using tools like `Postman`. Refer to the Endpoints section for specific routes and request methods.
 
 
 ## Endpoints
