@@ -99,14 +99,14 @@ It includes features for user authentication, profile management, recipe and cat
   - Authenticates an existing user with email and password.
   - Issues a token valid for 2 days upon successful login.
 
-- **Personal Information (GET/PUT /<username>/personal_info)**:
+- **Personal Information (GET/PUT /&lt;username&gt;/personal_info)**:
   - **GET**: Retrieves the personal information of the logged-in user.
   - **PUT**: Allows the user to update their first name, last name, and phone.
 
-- **Deactivate Profile (PUT /<username>/deactivate_profile)**:
+- **Deactivate Profile (PUT /&lt;username&gt;/deactivate_profile)**:
   - Deactivates the user’s profile, making it inaccessible.
 
-- **Change Password (PUT /<username>/change-password)**:
+- **Change Password (PUT /&lt;username&gt;/change-password)**:
   - Allows the user to update their password, given they provide the current one.
 
 ### Category Management
@@ -119,11 +119,11 @@ It includes features for user authentication, profile management, recipe and cat
   - **DELETE**: Allows only admins to delete an existing category.
 
 ### Recipe Management
-- **User Recipes (GET/POST /<username>/recipes)**:
+- **User Recipes (GET/POST /&lt;username&gt;/recipes)**:
   - **GET**: Lists recipes for the specified user. Admin has access to each user's recipes, while each user can only access their own recipes.
   - **POST**: Allows users with specific roles (beginner and advanced) to create recipes. Admin can't add recipes.
 
-- **Update/Delete Recipe (PUT/DELETE /<username>/recipes/<recipe_id>)**:
+- **Update/Delete Recipe (PUT/DELETE /&lt;username&gt;/recipes/<recipe_id>)**:
   - **PUT**: Allows the recipe owner to update details.
   - **DELETE**: Allows the recipe owner to delete the recipe.
 
@@ -144,7 +144,7 @@ It includes features for user authentication, profile management, recipe and cat
   - **DELETE**: Allows the comment owner to delete their comment.
 
 ### Photo Management
-- **Profile Photo Management (GET/POST/DELETE /<username>/personal_photo)**: Еach user can access their own profile photos info.
+- **Profile Photo Management (GET/POST/DELETE /&lt;username&gt;/personal_photo)**: Еach user can access their own profile photos info.
   - **GET**: Access the user's profile photo.
   - **POST**: Upload a new profile photo (one per user). We have one-to-one relation UserModel <=> UserPhotosModel
   - **DELETE**: Remove the profile photo from both the database and cloud storage.
@@ -152,10 +152,10 @@ It includes features for user authentication, profile management, recipe and cat
 - **List Recipe Photos (GET /recipe/<recipe_id>/photos)**:
   - **GET**: Lists all photos for a specific recipe. Any user can access this endpoint.
 
-- **Create Recipe Photos (POST username/recipes/<recipe_id>/photos)**:
+- **Create Recipe Photos (POST /&lt;username&gt;/recipes/<recipe_id>/photos)**:
   - **POST**: Аny user can add photos to their created recipe.
   
-- **Delete Recipe Photo (DELETE username/recipes/<recipe_id>/photos/photo_id)**:
+- **Delete Recipe Photo (DELETE /&lt;username&gt;/recipes/<recipe_id>/photos/photo_id)**:
   - **DELETE**: Any user can delete photos added to the recipe they created.
  
   ## Validation & Error Handling
