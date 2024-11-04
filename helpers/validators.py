@@ -3,9 +3,9 @@ from password_strength import PasswordPolicy
 
 policy = PasswordPolicy.from_names(
     uppercase=1,
+    lowercase=1,
     numbers=1,
     special=1,
-    nonletters=1,
 )
 
 
