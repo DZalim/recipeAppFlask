@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validates_schema, ValidationError, validates
+from marshmallow import Schema, fields, validates_schema, ValidationError, validates, validate
 from marshmallow_enum import EnumField
 
 from db import db
@@ -19,12 +19,12 @@ class RecipeUpdateRequestSchema(Schema):
 
 
 class BaseRecipeSchema(RecipeUpdateRequestSchema):
-    recipe_name = fields.String()
-    portions = fields.Integer()
-    preparing_time_in_minutes = fields.Integer()
-    cooking_time_in_minutes = fields.Integer()
-    ingredients = fields.String()
-    description = fields.String()
+    recipe_name = fields.String(validate=validate.Length(min=2))
+    portions = fields.Integer(validate=validate.Range(min=1))
+    preparing_time_in_minutes = fields.Integer(validate=validate.Range(min=1))
+    cooking_time_in_minutes = fields.Integer(validate=validate.Range(min=1))
+    ingredients = fields.String(validate=validate.Length(min=10))
+    description = fields.String(validate=validate.Length(min=10))
 
     @validates_schema
     def validate_required_fields(self, data, **kwargs):

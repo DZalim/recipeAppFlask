@@ -23,11 +23,25 @@ class TestApp(APIBaseTestCase):
         endpoints = (
             ("GET", "/username/personal_info"),
             ("PUT", "/username/personal_info"),
+            ("GET", "/username>/personal_photo"),
+            ("POST", "/username>/personal_photo"),
+            ("DELETE", "/username>/personal_photo"),
             ("PUT", "/username/deactivate_profile"),
             ("PUT", "/username/change-password"),
+            ("POST", "/categories"),
+            ("PUT", "/category/1"),
+            ("DELETE", "/category/1"),
+            ("GET", "/username/recipes"),
+            ("POST", "/username/recipes"),
+            ("PUT", "/username/recipes/1"),
+            ("DELETE", "/username/recipes/1"),
+            ("POST", "/username/recipes/1/photos"),
+            ("DELETE", "/username/recipes/1/photos/1"),
+            ("PUT", "/recipe/1"),
+            ("POST", "/recipe/1/comment"),
+            ("PUT", "/recipe/1/comment/1"),
+            ("DELETE", "/recipe/1/comment/1")
         )
-
-        # TODO: ADD OTHER ENDPOINTS!!!!
 
         return endpoints
 
@@ -73,7 +87,6 @@ class TestApp(APIBaseTestCase):
             ("DELETE", "/validuser/recipes/1/photos/1"),
         )
 
-
         return endpoints
 
     def test_validate_logged_user_nonmatching_username(self):
@@ -88,7 +101,7 @@ class TestApp(APIBaseTestCase):
             expected_message = {"message": "User not found"}
             self.assertEqual(resp.json, expected_message)
 
-    def test_permission_required(self, endpoints, headers):
+    def permission_required(self, endpoints, headers):
 
         for method, url in endpoints:
             resp = self.make_request(method, url, headers=headers)
@@ -112,11 +125,10 @@ class TestApp(APIBaseTestCase):
     def test_permission_required_categories_endpoints_beginner_user(self):
         endpoints = self.category_permission_required_endpoints()
 
-        # User is a beginner
         user = UserFactory()
         headers = self.return_authorization_headers(user)
 
-        self.test_permission_required(endpoints, headers)
+        self.permission_required(endpoints, headers)
 
     def test_permission_required_categories_endpoints_advanced_user(self):
         endpoints = self.category_permission_required_endpoints()
@@ -124,7 +136,7 @@ class TestApp(APIBaseTestCase):
         user = UserFactory(role=UserRoles.advanced)
         headers = self.return_authorization_headers(user)
 
-        self.test_permission_required(endpoints, headers)
+        self.permission_required(endpoints, headers)
 
     def test_permission_required_create_recipe_admin(self):
         endpoints = (
@@ -137,7 +149,7 @@ class TestApp(APIBaseTestCase):
         resp = self.client.post("/validuser/recipes", headers=headers)
         self.assertNotEqual(resp.status_code, 404)
 
-        self.test_permission_required(endpoints, headers)
+        self.permission_required(endpoints, headers)
 
 
 class TestRegisterSchema(APIBaseTestCase):
@@ -191,6 +203,8 @@ class TestRegisterSchema(APIBaseTestCase):
 
     def test_register(self):
         self.register_user()
+
+        # TODO: Add mock
 
         users = UserModel.query.all()
         self.assertEqual(len(users), 1)

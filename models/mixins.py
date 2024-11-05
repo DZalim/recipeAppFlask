@@ -6,7 +6,6 @@ from db import db
 
 
 class TimestampMixinModel(db.Model):
-
     __abstract__ = True
 
     created_at: Mapped[datetime] = mapped_column(

@@ -1,9 +1,7 @@
-from db import db
-from random import randint
-
 import factory
 
-from models import UserModel, UserRoles, ProfileStatus
+from db import db
+from models import UserModel, CategoryModel, RecipeModel, RecipeDifficultyLevel
 
 
 class BaseFactory(factory.Factory):
@@ -27,7 +25,31 @@ class UserFactory(BaseFactory):
     last_name = factory.Faker("last_name")
 
     # the following lines have default values
-        # phone = str(randint(100000, 200000))
-        # role = UserRoles.beginner
-        # profile_status = ProfileStatus.active
+    # phone = str(randint(100000, 200000))
+    # role = UserRoles.beginner
+    # profile_status = ProfileStatus.active
 
+
+class CategoryFactory(BaseFactory):
+    class Meta:
+        model = CategoryModel
+
+    id = factory.Sequence(lambda n: n)
+    category_name = factory.Faker("sentence", nb_words=3)
+
+
+class RecipeFactory(BaseFactory):
+    class Meta:
+        model = RecipeModel
+
+    id = factory.Sequence(lambda n: n)
+    recipe_name = factory.Faker("sentence", nb_words=3)
+    portions = factory.Faker("random_int", min=1, max=12)
+    preparing_time_in_minutes = factory.Faker("random_int", min=10, max=60)
+    cooking_time_in_minutes = factory.Faker("random_int", min=10, max=120)
+    ingredients = factory.Faker("sentence", nb_words=20)
+    description = factory.Faker("paragraph", nb_sentences=3)
+    difficulty_level = factory.Iterator(
+        [RecipeDifficultyLevel.easy, RecipeDifficultyLevel.medium, RecipeDifficultyLevel.hard])
+    # category_id = factory.SubFactory("tests.factories.CategoryFactory")
+    # user_id = factory.SubFactory("tests.factories.UserFactory")
