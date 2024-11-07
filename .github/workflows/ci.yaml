@@ -12,8 +12,8 @@ jobs:
         image: postgres:15.0
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ines123
-          POSTGRES_DB: complaintSystemStorageTesting
+          POSTGRES_PASSWORD: 5073Djansu!
+          POSTGRES_DB: test_flask_recipe_db
         ports:
           - 5432:5432
         # needed because the postgres container does not provide a healthcheck
