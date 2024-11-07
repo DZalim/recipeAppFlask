@@ -1,22 +1,12 @@
+from unittest.mock import patch
+
 from models import UserRoles, UserModel
+from services.sendgrid import SendGridService
 from tests.base import APIBaseTestCase
 from tests.factories import UserFactory
 
 
 class TestApp(APIBaseTestCase):
-
-    def make_request(self, method, url, headers=None):
-
-        if method == "GET":
-            resp = self.client.get(url, headers=headers)
-        elif method == "POST":
-            resp = self.client.post(url, headers=headers)
-        elif method == "PUT":
-            resp = self.client.put(url, headers=headers)
-        else:
-            resp = self.client.delete(url, headers=headers)
-
-        return resp
 
     @staticmethod
     def login_required_endpoints():
@@ -201,19 +191,15 @@ class TestRegisterSchema(APIBaseTestCase):
         expected_message = "Invalid fields: {'username': ['Username cannot contain spaces. Must be one word!']}"
         self.assertEqual(error_message, expected_message)
 
-    def test_register(self):
+    @patch.object(SendGridService, "send_email")
+    def test_register(self, mock_sendgrid):
         self.register_user()
-
-        # TODO: Add mock
-
-        users = UserModel.query.all()
-        self.assertEqual(len(users), 1)
 
 
 class TestLoginSchema(APIBaseTestCase):
 
     def test_login(self):
-        email, password = self.register_user()
+        email, password, user = self.register_user()
 
         login_data = {
             "email": email,
@@ -226,7 +212,7 @@ class TestLoginSchema(APIBaseTestCase):
         self.assertIsNotNone(token)
 
     def test_login_invalid_email(self):
-        email, password = self.register_user()
+        email, password, user = self.register_user()
 
         login_data = {
             "email": "invalid@invalid.com",
@@ -247,7 +233,7 @@ class TestLoginSchema(APIBaseTestCase):
         self.assertEqual(message, expected_message)
 
     def test_login_invalid_password(self):
-        email, password = self.register_user()
+        email, password, user = self.register_user()
 
         login_data = {
             "email": email,

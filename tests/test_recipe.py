@@ -1,5 +1,4 @@
-from db import db
-from models import UserRoles, RecipeModel, CategoryModel
+from models import UserRoles, RecipeModel
 from schemas.response.recipe import ResponseRecipeSchema
 from tests.base import APIBaseTestCase
 from tests.factories import UserFactory
@@ -16,7 +15,7 @@ class TestRecipe(APIBaseTestCase):
 
         data = {}
 
-        resp = self.client.post("/validuser/recipes", headers=headers, json=data)
+        resp = self.client.post(f"/{matching_user.username}/recipes", headers=headers, json=data)
 
         self.assertEqual(resp.status_code, 400)
 
@@ -36,9 +35,7 @@ class TestRecipe(APIBaseTestCase):
         recipes = RecipeModel.query.all()
         self.assertEqual(len(recipes), 0)
 
-        category_name = self.create_category()[0]
-        category = (db.session.execute(db.select(CategoryModel)
-                                       .filter_by(category_name=category_name)).scalar())
+        category = self.create_category()[0]
 
         data = {
             "recipe_name": "L",  # invalid
@@ -50,7 +47,7 @@ class TestRecipe(APIBaseTestCase):
             "category_id": category.id
         }
 
-        resp = self.client.post("/validuser/recipes", headers=headers, json=data)
+        resp = self.client.post(f"/{matching_user.username}/recipes", headers=headers, json=data)
 
         self.assertEqual(resp.status_code, 400)
 
@@ -61,44 +58,42 @@ class TestRecipe(APIBaseTestCase):
         self.assertEqual(len(recipes), 0)
 
     def test_recipe_create(self):
-        recipe_name, headers = self.create_recipe()
-
-        return recipe_name
+        self.create_recipe()
 
     def test_recipe_create_with_photo(self):
         pass
 
-    def test_nonexisting_user_with_recipe(self):
-        recipe_name, headers = self.create_recipe()
-        recipe = (db.session.execute(db.select(RecipeModel)
-                                     .filter_by(recipe_name=recipe_name)).scalar())
-        recipe_id_unmatched = recipe.id + 1
+    def test_existing_user_with_nonrecipe(self):
+        recipe, recipe_user_headers, user = self.create_recipe()
+        updated_data = {}
 
-        updated_data = {
-            "recipe_name": "Other Name"
-        }
+        endpoints = (
+            ("PUT", f"/{user.username}/recipes/{recipe.id + 1}"),
+            ("DELETE", f"/{user.username}/recipes/{recipe.id + 1}"),
+            ("POST", f"/{user.username}/recipes/{recipe.id + 1}/photos"),
+            ("DELETE", f"/{user.username}/recipes/{recipe.id + 1}/photos/1"),
+        )
 
-        resp = self.client.put(f"/validuser/recipes/{recipe_id_unmatched}", headers=headers, json=updated_data)
+        for method, url in endpoints:
+            resp = self.make_request(method, url, headers=recipe_user_headers, data=updated_data)
 
-        self.assertEqual(resp.status_code, 404)
+            self.assertEqual(resp.status_code, 404)
 
-        recipes = RecipeModel.query.all()
-        self.assertEqual(len(recipes), 1)
+            recipes = RecipeModel.query.all()
+            self.assertEqual(len(recipes), 1)
 
-        expected_message = {"message": "No user with this recipe"}
-        self.assertEqual(resp.json, expected_message)
+            expected_message = {"message": "No user with this recipe"}
+            self.assertEqual(resp.json, expected_message)
 
     def test_recipe_update_success(self):
-        recipe_name, headers = self.create_recipe()
-        recipe = (db.session.execute(db.select(RecipeModel)
-                                     .filter_by(recipe_name=recipe_name)).scalar())
+        recipe, headers, user = self.create_recipe()
 
         updated_data = {
             "recipe_name": "Other Name",
             "portions": 4
         }
 
-        resp = self.client.put(f"/validuser/recipes/{recipe.id}", headers=headers, json=updated_data)
+        resp = self.client.put(f"/{user.username}/recipes/{recipe.id}", headers=headers, json=updated_data)
 
         self.assertEqual(resp.status_code, 200)
 
@@ -112,24 +107,20 @@ class TestRecipe(APIBaseTestCase):
         self.assertEqual(resp.json, expected_message)
 
     def test_recipe_delete_success(self):
-        recipe_name, headers = self.create_recipe()
-        recipe = (db.session.execute(db.select(RecipeModel)
-                                     .filter_by(recipe_name=recipe_name)).scalar())
+        recipe, headers, user = self.create_recipe()
 
-        resp = self.client.delete(f"/validuser/recipes/{recipe.id}", headers=headers)
+        resp = self.client.delete(f"/{user.username}/recipes/{recipe.id}", headers=headers)
 
         self.assertEqual(resp.status_code, 200)
 
         recipes = RecipeModel.query.all()
         self.assertEqual(len(recipes), 0)
 
-        expected_message = f"Recipe named '{recipe_name}' has been deleted"
+        expected_message = f"Recipe named '{recipe.recipe_name}' has been deleted"
         self.assertEqual(resp.json, expected_message)
 
     def test_get_single_recipe(self):
-        recipe_name, headers = self.create_recipe()
-        recipe = (db.session.execute(db.select(RecipeModel)
-                                     .filter_by(recipe_name=recipe_name)).scalar())
+        recipe, headers, user = self.create_recipe()
 
         resp = self.client.get(f"/recipe/{recipe.id}", headers=headers)
 

@@ -1,9 +1,13 @@
+from unittest.mock import patch
+
 from flask_testing import TestCase
 
 from config import create_app
 from db import db
 from managers.auth import AuthManager
-from models import UserModel, UserRoles, CategoryModel, RecipeModel
+from models import UserModel, UserRoles, CategoryModel, RecipeModel, CommentModel
+from schemas.response.comment import ResponseCommentSchema
+from services.sendgrid import SendGridService
 from tests.factories import UserFactory
 
 
@@ -22,7 +26,21 @@ class APIBaseTestCase(TestCase):
         db.session.remove()
         db.drop_all()
 
-    def register_user(self):
+    def make_request(self, method, url, headers=None, data=None):
+
+        if method == "GET":
+            resp = self.client.get(url, headers=headers)
+        elif method == "POST":
+            resp = self.client.post(url, headers=headers, json=data)
+        elif method == "PUT":
+            resp = self.client.put(url, headers=headers, json=data)
+        else:
+            resp = self.client.delete(url, headers=headers)
+
+        return resp
+
+    @patch.object(SendGridService, "send_email")
+    def register_user(self, mock_sendgrid):
         data = {
             "email": "hello@hello.com",
             "password": "Hello123!",
@@ -40,7 +58,20 @@ class APIBaseTestCase(TestCase):
         token = resp.json["token"]
         self.assertIsNotNone(token)
 
-        return data["email"], data["password"]
+        users = UserModel.query.all()
+        self.assertEqual(len(users), 1)
+
+        to_send = {
+            "recipient": ["ilearntosendmails@mail.bg"],
+            "subject": f"Welcome to our delicious country {users[0].first_name} {users[0].last_name}",
+            "content": f"Hello {users[0].username},\n "
+                       f"We expect your delicious recipes to reach a wide range of people.\n"
+                       f"Best Regards,\n"
+                       f"Delicious Recipe"}
+
+        mock_sendgrid.assert_called_once_with(**to_send)
+
+        return data["email"], data["password"], users[0]
 
     def return_authorization_headers(self, user):
         user_token = generate_token(user)
@@ -72,7 +103,7 @@ class APIBaseTestCase(TestCase):
         expected_message = f"A category named '{category_name}' has been created"
         self.assertEqual(resp.json, expected_message)
 
-        return category_name, headers
+        return categories[0], headers
 
     def create_recipe(self):
         matching_user = UserFactory(username="validuser", role=UserRoles.beginner)
@@ -81,9 +112,7 @@ class APIBaseTestCase(TestCase):
         recipes = RecipeModel.query.all()
         self.assertEqual(len(recipes), 0)
 
-        category_name = self.create_category()[0]
-        category = (db.session.execute(db.select(CategoryModel)
-                                       .filter_by(category_name=category_name)).scalar())
+        category = self.create_category()[0]
 
         data = {
             "recipe_name": "Lasagnia",
@@ -111,4 +140,28 @@ class APIBaseTestCase(TestCase):
         expected_message = f"A recipe named '{recipe_name}' has been created"
         self.assertEqual(resp.json, expected_message)
 
-        return recipe_name, headers
+        return recipes[0], headers, matching_user
+
+    def create_comment(self):
+        recipe = self.create_recipe()[0]
+
+        comments = CommentModel.query.all()
+        self.assertEqual(len(comments), 0)
+
+        comment_user = UserFactory()
+        headers = self.return_authorization_headers(comment_user)
+
+        comment_data = {
+            "description": "This is a comment for recipe",
+        }
+
+        resp = self.client.post(f"/recipe/{recipe.id}/comment", headers=headers, json=comment_data)
+
+        comments = CommentModel.query.all()
+        self.assertEqual(len(comments), 1)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = ResponseCommentSchema().dump(comments[0])
+        self.assertEqual(resp.json, expected_message)
+
+        return comments[0], recipe, headers

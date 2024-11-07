@@ -1,7 +1,7 @@
 import factory
 
 from db import db
-from models import UserModel, CategoryModel, RecipeModel, RecipeDifficultyLevel
+from models import UserModel, CategoryModel, RecipeModel, RecipeDifficultyLevel, CommentModel
 
 
 class BaseFactory(factory.Factory):
@@ -53,3 +53,11 @@ class RecipeFactory(BaseFactory):
         [RecipeDifficultyLevel.easy, RecipeDifficultyLevel.medium, RecipeDifficultyLevel.hard])
     # category_id = factory.SubFactory("tests.factories.CategoryFactory")
     # user_id = factory.SubFactory("tests.factories.UserFactory")
+
+
+class CommentFactory(BaseFactory):
+    class Meta:
+        model = CommentModel
+
+    id = factory.Sequence(lambda n: n)
+    description = factory.Faker("paragraph", nb_sentences=3)

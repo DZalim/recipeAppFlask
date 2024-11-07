@@ -1,4 +1,3 @@
-from db import db
 from models import UserRoles, CategoryModel
 from schemas.response.category import CategoryResponseSchema
 from schemas.response.recipe import ResponseRecipeSchema
@@ -51,24 +50,16 @@ class TestCategory(APIBaseTestCase):
         self.assertEqual(len(categories), 0)
 
     def test_category_create(self):
-        category_name, headers = self.create_category()
-
-        return category_name
+        self.create_category()
 
     def test_category_schema_same_name(self):
-        category_name, first_header = self.create_category()
-
-        categories = CategoryModel.query.all()
-        self.assertEqual(len(categories), 1)
-
-        user = UserFactory(role=UserRoles.admin)
-        headers = self.return_authorization_headers(user)
+        category, category_user_header = self.create_category()
 
         data = {
-            "category_name": category_name
+            "category_name": category.category_name
         }
 
-        resp = self.client.post("/categories", headers=headers, json=data)
+        resp = self.client.post("/categories", headers=category_user_header, json=data)
 
         self.assertEqual(resp.status_code, 400)
 
@@ -81,36 +72,36 @@ class TestCategory(APIBaseTestCase):
         self.assertEqual(len(categories), 1)
 
     def test_nonexisting_category(self):
-        category_name, headers = self.create_category()
-        category = (db.session.execute(db.select(CategoryModel)
-                                       .filter_by(category_name=category_name)).scalar())
-        category_id_unmatched = category.id + 1
+        category, category_user_header = self.create_category()
 
         updated_data = {
             "category_name": "Other Name"
         }
 
-        resp = self.client.put(f"/category/{category_id_unmatched}", headers=headers, json=updated_data)
+        endpoints = (
+            ("PUT", f"/category/{category.id + 1}"),
+            ("DELETE", f"/category/{category.id + 1}")
+        )
 
-        self.assertEqual(resp.status_code, 404)
+        for method, url in endpoints:
+            resp = self.make_request(method, url, headers=category_user_header, data=updated_data)
 
-        categories = CategoryModel.query.all()
-        self.assertEqual(len(categories), 1)
+            self.assertEqual(resp.status_code, 404)
 
-        expected_message = {"message": "Category Not Found"}
-        self.assertEqual(resp.json, expected_message)
+            categories = CategoryModel.query.all()
+            self.assertEqual(len(categories), 1)
+
+            expected_message = {"message": "Category Not Found"}
+            self.assertEqual(resp.json, expected_message)
 
     def test_category_update_success(self):
-        category_name, headers = self.create_category()
-        category = (db.session.execute(db.select(CategoryModel)
-                                       .filter_by(category_name=category_name)).scalar())
-        category_id = category.id
+        category, category_user_header = self.create_category()
 
         updated_data = {
             "category_name": "Updated name"
         }
 
-        resp = self.client.put(f"/category/{category_id}", headers=headers, json=updated_data)
+        resp = self.client.put(f"/category/{category.id}", headers=category_user_header, json=updated_data)
 
         self.assertEqual(resp.status_code, 200)
 
@@ -118,23 +109,20 @@ class TestCategory(APIBaseTestCase):
         self.assertEqual(len(categories), 1)
 
         new_name = updated_data["category_name"]
-        expected_message = f"Category with id {category_id} has been updated. Category name is now: {new_name}"
+        expected_message = f"Category with id {category.id} has been updated. Category name is now: {new_name}"
         self.assertEqual(resp.json, expected_message)
 
     def test_category_delete_success(self):
-        category_name, headers = self.create_category()
-        category = (db.session.execute(db.select(CategoryModel)
-                                       .filter_by(category_name=category_name)).scalar())
-        category_id = category.id
+        category, category_user_header = self.create_category()
 
-        resp = self.client.delete(f"/category/{category_id}", headers=headers)
+        resp = self.client.delete(f"/category/{category.id}", headers=category_user_header)
 
         self.assertEqual(resp.status_code, 200)
 
         categories = CategoryModel.query.all()
         self.assertEqual(len(categories), 0)
 
-        expected_message = f"Category named '{category_name}' has been deleted"
+        expected_message = f"Category named '{category.category_name}' has been deleted"
         self.assertEqual(resp.json, expected_message)
 
     def test_get_category(self):
@@ -149,14 +137,13 @@ class TestCategory(APIBaseTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json, CategoryResponseSchema(many=True).dump(categories))
 
-    def test_get_categories_recipes(self):  # TODO: fix this!!! single works, but ...
-        category_name = self.create_category()[0]
-        category = (db.session.execute(db.select(CategoryModel)
-                                       .filter_by(category_name=category_name)).scalar())
+    def test_get_categories_recipes(self):
+        category = self.create_category()[0]
 
         recipes = []
         for i in range(5):
-            recipe = RecipeFactory(category_id=category.id, user_id=0)
+            user = UserFactory()
+            recipe = RecipeFactory(category_id=category.id, user_id=user.id)
 
             recipes.append(recipe)
 
