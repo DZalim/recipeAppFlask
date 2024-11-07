@@ -5,7 +5,11 @@ from flask_testing import TestCase
 from config import create_app
 from db import db
 from managers.auth import AuthManager
-from models import UserModel, UserRoles, CategoryModel, RecipeModel, CommentModel
+from models.category import CategoryModel
+from models.comments import CommentModel
+from models.enums import UserRoles
+from models.recipe import RecipeModel
+from models.user import UserModel
 from schemas.response.comment import ResponseCommentSchema
 from services.sendgrid import SendGridService
 from tests.factories import UserFactory

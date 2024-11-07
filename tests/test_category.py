@@ -1,4 +1,5 @@
-from models import UserRoles, CategoryModel
+from models.category import CategoryModel
+from models.enums import UserRoles
 from schemas.response.category import CategoryResponseSchema
 from schemas.response.recipe import ResponseRecipeSchema
 from tests.base import APIBaseTestCase

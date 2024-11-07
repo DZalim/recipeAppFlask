@@ -1,7 +1,11 @@
 import factory
 
 from db import db
-from models import UserModel, CategoryModel, RecipeModel, RecipeDifficultyLevel, CommentModel
+from models.category import CategoryModel
+from models.comments import CommentModel
+from models.enums import RecipeDifficultyLevel
+from models.recipe import RecipeModel
+from models.user import UserModel
 
 
 class BaseFactory(factory.Factory):

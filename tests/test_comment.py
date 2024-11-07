@@ -1,4 +1,4 @@
-from models import CommentModel
+from models.comments import CommentModel
 from schemas.response.comment import ResponseCommentSchema
 from tests.base import APIBaseTestCase
 from tests.factories import UserFactory

@@ -1,4 +1,5 @@
-from models import UserRoles, RecipeModel
+from models.enums import UserRoles
+from models.recipe import RecipeModel
 from schemas.response.recipe import ResponseRecipeSchema
 from tests.base import APIBaseTestCase
 from tests.factories import UserFactory

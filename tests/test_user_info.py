@@ -1,4 +1,5 @@
-from models import UserModel, UserRoles, ProfileStatus
+from models.enums import UserRoles, ProfileStatus
+from models.user import UserModel
 from schemas.response.user import UserInfoResponse
 from tests.base import APIBaseTestCase
 from tests.factories import UserFactory

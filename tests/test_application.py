@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
-from models import UserRoles, UserModel
+from models.enums import UserRoles
+from models.user import UserModel
 from services.sendgrid import SendGridService
 from tests.base import APIBaseTestCase
 from tests.factories import UserFactory
