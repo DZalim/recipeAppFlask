@@ -58,6 +58,11 @@ jobs:
           done
           echo "PostgreSQL is ready."
 
+      - name: Print environment variables
+        run: |
+          echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}"
+          echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}"
+          
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
