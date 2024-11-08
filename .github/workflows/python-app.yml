@@ -60,8 +60,10 @@ jobs:
 
       - name: Run tests
         env:
-          PYTHONPATH: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/recipeAppFlask
         run: |
           echo "PYTHONPATH set to: $PYTHONPATH"
-          pytest tests/
+          echo "Current directory: $(pwd)"
+          ls -R
+          pytest tests/ -v
 
