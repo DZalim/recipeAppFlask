@@ -43,12 +43,12 @@ jobs:
           DB_NAME: 'flask_recipe_db'
           DB_NAME_TEST: 'test_flask_recipe_db'
           CONFIG_ENV: "config.TestingConfig"
-          SECRET_KEY: ""
-          CLOUDINARY_CLOUD_NAME: ""
-          CLOUDINARY_API_KEY: ""
-          CLOUDINARY_API_SECRET: ""
-          SENDGRID_API_KEY: ""
-          EMAIL_SENDER: ""
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }} >> .env
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }} >> .env
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }} >> .env
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }} >> .env
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }} >> .env
         run: |
           # Ensure PostgreSQL is ready before continuing
           export PGPASSWORD="${{ secrets.DB_PASSWORD }}"
@@ -57,6 +57,9 @@ jobs:
             sleep 1
           done
           echo "PostgreSQL is ready."
+
+      - name: Check .env file content
+        run: cat .env
 
       - name: Print environment variables
         run: |
