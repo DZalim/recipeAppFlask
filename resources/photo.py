@@ -45,7 +45,7 @@ class RecipePhotosList(Resource):
     @staticmethod
     def get(recipe_pk):
         RecipeManager.get_recipe(recipe_pk)
-        recipe_photo = PhotoManager().get_photo(recipe_pk, "recipe")
+        recipe_photo = PhotoManager().get_photo(recipe_pk, "recipe").all()
         return RecipePhotoResponseSchema(many=True).dump(recipe_photo) if recipe_photo \
             else "No photos added"
 

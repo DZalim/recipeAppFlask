@@ -1,13 +1,42 @@
 from models.comments import CommentModel
 from schemas.response.comment import ResponseCommentSchema
 from tests.base import APIBaseTestCase
-from tests.factories import UserFactory
+from tests.factories import UserFactory, CommentFactory
 
 
 class TestComment(APIBaseTestCase):
 
-    def test_create_recipe(self):
+    def test_get_recipe_comments_nocommets(self):
+        recipe = self.create_recipe()[0]
+
+        resp = self.client.get(f"/recipe/{recipe.id}/comment")
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = "No comments have been added to this recipe yet"
+        self.assertEqual(resp.json, expected_message)
+
+        comments = CommentModel.query.all()
+        self.assertEqual(len(comments), len(recipe.comments))
+
+    def test_create_recipe_comment(self):
         self.create_comment()
+
+    def test_get_recipe_comments_with_comments(self):
+        recipe = self.create_recipe()[0]
+
+        for i in range(5):
+            user = UserFactory()
+            CommentFactory(recipe_id=recipe.id, user_id=user.id)
+
+        resp = self.client.get(f"/recipe/{recipe.id}/comment")
+
+        self.assertEqual(resp.status_code, 200)
+
+        comments = CommentModel.query.all()
+        expected_message = ResponseCommentSchema(many=True).dump(comments)
+        self.assertEqual(resp.json, expected_message)
+
+        self.assertEqual(len(comments), len(recipe.comments))
 
     def test_nonexisting_comment_and_recipe(self):
         comment, recipe, headers = self.create_comment()

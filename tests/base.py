@@ -1,22 +1,32 @@
+import os
 from unittest.mock import patch
 
 from flask_testing import TestCase
 
 from config import create_app
+from constant import USER_PHOTOS, RECIPE_PHOTOS
 from db import db
 from managers.auth import AuthManager
+from models import UsersPhotoModel, RecipePhotosModel
 from models.category import CategoryModel
 from models.comments import CommentModel
 from models.enums import UserRoles
 from models.recipe import RecipeModel
 from models.user import UserModel
 from schemas.response.comment import ResponseCommentSchema
+from schemas.response.photo import UserPhotoResponseSchema, RecipePhotoResponseSchema
+from services.cloudinary import CloudinaryService
 from services.sendgrid import SendGridService
+from tests.encoded_file import encoded_file
 from tests.factories import UserFactory
 
 
 def generate_token(user):
     return AuthManager.encode_token(user)
+
+
+def mock_uuid():
+    return "11111111"
 
 
 class APIBaseTestCase(TestCase):
@@ -169,3 +179,70 @@ class APIBaseTestCase(TestCase):
         self.assertEqual(resp.json, expected_message)
 
         return comments[0], recipe, headers
+
+    @patch("uuid.uuid4", mock_uuid)
+    @patch.object(CloudinaryService, "upload_photo", return_value="some.url")
+    def create_user_photo(self, mock_photo):
+
+        user = UserFactory()
+        headers = self.return_authorization_headers(user)
+
+        photo_data = {
+            "photo": encoded_file,
+            "photo_extension": "jpg"
+        }
+
+        resp = self.client.post(f"/{user.username}/personal_photo", headers=headers, json=photo_data)
+
+        users = UserModel.query.all()
+        self.assertEqual(len(users), 1)
+
+        user_photo = (db.session.execute(db.select(UsersPhotoModel)
+                                         .filter_by(user_id=user.id)).scalar())
+
+        self.assertIsNotNone(user_photo)
+        self.assertIsInstance(user_photo, UsersPhotoModel)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = UserPhotoResponseSchema().dump(user_photo)
+        self.assertEqual(resp.json, expected_message)
+
+        file_name = mock_uuid()
+        extension = photo_data["photo_extension"]
+
+        path = os.path.join(USER_PHOTOS, f"{file_name}.{extension}")
+
+        mock_photo.assert_called_once_with(path, extension)
+
+        return user_photo, user, headers
+
+    @patch("uuid.uuid4", mock_uuid)
+    @patch.object(CloudinaryService, "upload_photo", return_value="some.url")
+    def create_recipe_photo(self, mock_photo):
+        recipe, user_headers, user = self.create_recipe()
+
+        photo_data = {
+            "photo": encoded_file,
+            "photo_extension": "jpg"
+        }
+
+        resp = self.client.post(f"/{user.username}/recipes/{recipe.id}/photos", headers=user_headers, json=photo_data)
+
+        recipe_photos = (db.session.execute(db.select(RecipePhotosModel)
+                                            .filter_by(recipe_id=recipe.id)).scalars().all())
+
+        self.assertIsInstance(recipe_photos, list)
+        self.assertEqual(len(recipe_photos), 1)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = RecipePhotoResponseSchema().dump(recipe_photos[0])
+        self.assertEqual(resp.json, expected_message)
+
+        file_name = mock_uuid()
+        extension = photo_data["photo_extension"]
+
+        path = os.path.join(RECIPE_PHOTOS, f"{file_name}.{extension}")
+
+        mock_photo.assert_called_once_with(path, extension)
+
+        return recipe_photos[0], user, user_headers
