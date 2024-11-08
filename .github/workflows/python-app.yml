@@ -59,7 +59,9 @@ jobs:
           echo "PostgreSQL is ready."
 
       - name: Run tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
-          export PYTHONPATH=$(pwd)/recipeAppFlask
-          pytest
+          echo "PYTHONPATH set to: $PYTHONPATH"
+          pytest tests/
 
