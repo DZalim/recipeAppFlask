@@ -10,7 +10,7 @@ class TestUserInfo(APIBaseTestCase):
         users = UserModel.query.all()
         self.assertEqual(len(users), 0)
 
-        user = UserFactory(username="validuser", role=UserRoles.beginner, profile_status=ProfileStatus.active)
+        user = UserFactory(role=UserRoles.beginner, profile_status=ProfileStatus.active)
         headers = self.return_authorization_headers(user)
 
         resp = self.client.get(f"/{user.username}/personal_info", headers=headers)
@@ -26,7 +26,7 @@ class TestUserInfo(APIBaseTestCase):
         users = UserModel.query.all()
         self.assertEqual(len(users), 0)
 
-        user = UserFactory(username="validuser")
+        user = UserFactory()
         headers = self.return_authorization_headers(user)
 
         data = {
@@ -50,7 +50,7 @@ class TestUserInfo(APIBaseTestCase):
         users = UserModel.query.all()
         self.assertEqual(len(users), 0)
 
-        user = UserFactory(username="validuser")
+        user = UserFactory()
         headers = self.return_authorization_headers(user)
 
         data = {

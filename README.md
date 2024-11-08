@@ -41,6 +41,7 @@ It includes features for user authentication, profile management, recipe and cat
 
 2. **Install Requirements**:
     ```bash
+    python -m pip install --upgrade pip
     pip install -r requirements.txt
     ```
 
@@ -51,6 +52,8 @@ It includes features for user authentication, profile management, recipe and cat
         DB_PASSWORD=YOUR_PASSWORD
         DB_PORT=YOUR_PORT
         DB_NAME=YOUR_DB_NAME
+        DB_NAME_TEST=YOUR_DB_NAME_TEST
+        CONFIG_ENV=YOUR_CONFIG_ENV
         SECRET_KEY=YOUR_SECRET_KEY
         CLOUDINARY_CLOUD_NAME=YOUR_CLOUDINARY_CLOUD_NAME
         CLOUDINARY_API_KEY=YOUR_CLOUDINARY_API_KEY

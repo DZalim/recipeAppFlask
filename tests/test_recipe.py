@@ -1,4 +1,5 @@
 import os
+import random
 from unittest.mock import patch
 
 from constant import RECIPE_PHOTOS
@@ -10,21 +11,20 @@ from schemas.response.recipe import ResponseRecipeSchema
 from services.cloudinary import CloudinaryService
 from tests.base import APIBaseTestCase, mock_uuid
 from tests.encoded_file import encoded_file
-from tests.factories import UserFactory
+from tests.factories import UserFactory, RecipeFactory, CategoryFactory
 
 
-class TestRecipe(APIBaseTestCase):
-
+class TestRecipeSchemaFields(APIBaseTestCase):
     def test_recipe_request_schema_missing_fields(self):
-        matching_user = UserFactory(username="validuser", role=UserRoles.beginner)
-        headers = self.return_authorization_headers(matching_user)
+        user = UserFactory(role=UserRoles.beginner)
+        headers = self.return_authorization_headers(user)
 
         recipes = RecipeModel.query.all()
         self.assertEqual(len(recipes), 0)
 
         data = {}
 
-        resp = self.client.post(f"/{matching_user.username}/recipes", headers=headers, json=data)
+        resp = self.client.post(f"/{user.username}/recipes", headers=headers, json=data)
 
         self.assertEqual(resp.status_code, 400)
 
@@ -38,8 +38,8 @@ class TestRecipe(APIBaseTestCase):
         self.assertEqual(len(recipes), 0)
 
     def test_recipe_request_schema_invalid_recipe_name_field(self):
-        matching_user = UserFactory(username="validuser", role=UserRoles.beginner)
-        headers = self.return_authorization_headers(matching_user)
+        user = UserFactory(role=UserRoles.beginner)
+        headers = self.return_authorization_headers(user)
 
         recipes = RecipeModel.query.all()
         self.assertEqual(len(recipes), 0)
@@ -56,7 +56,7 @@ class TestRecipe(APIBaseTestCase):
             "category_id": category.id
         }
 
-        resp = self.client.post(f"/{matching_user.username}/recipes", headers=headers, json=data)
+        resp = self.client.post(f"/{user.username}/recipes", headers=headers, json=data)
 
         self.assertEqual(resp.status_code, 400)
 
@@ -66,6 +66,32 @@ class TestRecipe(APIBaseTestCase):
         recipes = RecipeModel.query.all()
         self.assertEqual(len(recipes), 0)
 
+
+class TestUserWithRecipe(APIBaseTestCase):
+    def test_existing_user_with_nonrecipe(self):
+        recipe, recipe_user_headers, user = self.create_recipe()
+        updated_data = {}
+
+        endpoints = (
+            ("PUT", f"/{user.username}/recipes/{recipe.id + 1}"),
+            ("DELETE", f"/{user.username}/recipes/{recipe.id + 1}"),
+            ("POST", f"/{user.username}/recipes/{recipe.id + 1}/photos"),
+            ("DELETE", f"/{user.username}/recipes/{recipe.id + 1}/photos/1"),
+        )
+
+        for method, url in endpoints:
+            resp = self.make_request(method, url, headers=recipe_user_headers, data=updated_data)
+
+            self.assertEqual(resp.status_code, 404)
+
+            recipes = RecipeModel.query.all()
+            self.assertEqual(len(recipes), 1)
+
+            expected_message = {"message": "No user with this recipe"}
+            self.assertEqual(resp.json, expected_message)
+
+
+class TestCreateRecipe(APIBaseTestCase):
     def test_recipe_create(self):
         self.create_recipe()
 
@@ -121,29 +147,95 @@ class TestRecipe(APIBaseTestCase):
 
         mock_photo.assert_called_once_with(path, extension)
 
-    def test_existing_user_with_nonrecipe(self):
-        recipe, recipe_user_headers, user = self.create_recipe()
-        updated_data = {}
 
-        endpoints = (
-            ("PUT", f"/{user.username}/recipes/{recipe.id + 1}"),
-            ("DELETE", f"/{user.username}/recipes/{recipe.id + 1}"),
-            ("POST", f"/{user.username}/recipes/{recipe.id + 1}/photos"),
-            ("DELETE", f"/{user.username}/recipes/{recipe.id + 1}/photos/1"),
-        )
+class TestGetRecipe(APIBaseTestCase):
+    def test_get_single_recipe(self):
+        recipe = self.create_recipe()[0]
 
-        for method, url in endpoints:
-            resp = self.make_request(method, url, headers=recipe_user_headers, data=updated_data)
+        resp = self.client.get(f"/recipe/{recipe.id}")
 
-            self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.status_code, 200)
 
-            recipes = RecipeModel.query.all()
-            self.assertEqual(len(recipes), 1)
+        expected_message = ResponseRecipeSchema().dump(recipe)
+        self.assertEqual(resp.json, expected_message)
 
-            expected_message = {"message": "No user with this recipe"}
-            self.assertEqual(resp.json, expected_message)
+    def test_get_username_own_recipes_norecipe(self):
+        user = UserFactory(role=UserRoles.beginner)
+        headers = self.return_authorization_headers(user)
 
-    def test_recipe_update_success(self):
+        recipes = RecipeModel.query.all()
+        self.assertEqual(len(recipes), 0)
+
+        resp = self.client.get(f"/{user.username}/recipes", headers=headers)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = f"User '{user.username}' has not added any recipes yet"
+        self.assertEqual(resp.json, expected_message)
+
+    def test_get_username_recipes(self):
+        category = self.create_category()[0]
+        user = UserFactory(role=UserRoles.beginner)
+        headers = self.return_authorization_headers(user)
+
+        recipes = []
+        for i in range(7):
+            recipe = RecipeFactory(category_id=category.id, user_id=user.id)
+            recipes.append(recipe)
+
+        other_user = UserFactory(role=UserRoles.advanced)
+        other_recipes = []
+        for i in range(6):
+            RecipeFactory(category_id=category.id, user_id=other_user.id)
+            recipes.append(other_recipes)
+
+        all_recipes = RecipeModel.query.all()
+        self.assertEqual(len(all_recipes), 13)
+
+        user_recipes = (db.session.execute(db.select(RecipeModel)
+                                           .filter_by(user_id=user.id)).scalars().all())
+        self.assertEqual(len(user_recipes), 7)
+
+        resp = self.client.get(f"/{user.username}/recipes", headers=headers)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = ResponseRecipeSchema().dump(user_recipes, many=True)
+        self.assertEqual(resp.json, expected_message)
+
+    def test_get_username_recipes_by_admin(self):  # have access to all users recipes
+        category = self.create_category()[0]
+        admin = UserFactory(role=UserRoles.admin)
+        headers = self.return_authorization_headers(admin)
+
+        user_endpoint = UserFactory(role=UserRoles.beginner)
+
+        recipes = []
+        for i in range(5):
+            recipe = RecipeFactory(category_id=category.id, user_id=user_endpoint.id)
+            recipes.append(recipe)
+            self.assertNotEqual(recipe.user_id, admin.id)
+
+        for i in range(5):
+            user = UserFactory(role=random.choice([UserRoles.beginner, UserRoles.advanced]))
+            recipe = RecipeFactory(category_id=category.id, user_id=user.id)
+            recipes.append(recipe)
+            self.assertNotEqual(recipe.user_id, admin.id)
+
+        all_recipes = RecipeModel.query.all()
+        self.assertEqual(len(all_recipes), 10)
+
+        user_recipes = (db.session.execute(db.select(RecipeModel)
+                                           .filter_by(user_id=user_endpoint.id)).scalars().all())
+        self.assertEqual(len(user_recipes), 5)
+
+        resp = self.client.get(f"/{user_endpoint.username}/recipes", headers=headers)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = ResponseRecipeSchema().dump(user_recipes, many=True)
+        self.assertEqual(resp.json, expected_message)
+
+
+class TestUpdateRecipe(APIBaseTestCase):
+    def test_own_recipe_update_success(self):
         recipe, headers, user = self.create_recipe()
 
         updated_data = {
@@ -164,6 +256,100 @@ class TestRecipe(APIBaseTestCase):
         expected_message = f"The fields {fields} has been updated"
         self.assertEqual(resp.json, expected_message)
 
+    def test_update_recipe_category_and_difficulty_by_admin(self):
+        category = CategoryFactory()
+
+        recipe_user = UserFactory(role=UserRoles.beginner)
+        recipe = RecipeFactory(category_id=category.id, user_id=recipe_user.id)
+
+        admin = UserFactory(role=UserRoles.admin)
+        headers = self.return_authorization_headers(admin)
+
+        other_category = CategoryFactory()
+
+        data = {
+            "category_id": other_category.id,
+            "difficulty_level": "medium"
+        }
+
+        resp = self.client.put(f"/recipe/{recipe.id}", headers=headers, json=data)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = f"Recipe named '{recipe.recipe_name}' has been updated"
+        self.assertEqual(resp.json, expected_message)
+
+    def test_update_other_recipe_category_and_difficulty_by_beginner_user(self):
+        category = CategoryFactory()
+
+        recipe_user = UserFactory(role=UserRoles.beginner)
+        recipe = RecipeFactory(category_id=category.id, user_id=recipe_user.id)
+
+        advanced_user = UserFactory(role=UserRoles.advanced)  # when there are less than 5 recipes it becomes beginner
+        headers = self.return_authorization_headers(advanced_user)
+
+        other_category = CategoryFactory()
+
+        data = {
+            "category_id": other_category.id,
+            "difficulty_level": "hard"
+        }
+
+        resp = self.client.put(f"/recipe/{recipe.id}", headers=headers, json=data)
+
+        self.assertEqual(resp.status_code, 403)
+        expected_message = {
+            "message": "You do not have permissions to access this resource"
+        }
+        self.assertEqual(resp.json, expected_message)
+
+    def create_info(self):
+        category = CategoryFactory()
+
+        recipe_user = UserFactory(role=UserRoles.beginner)
+        recipe = RecipeFactory(category_id=category.id, user_id=recipe_user.id)
+
+        beginner_user = UserFactory(role=UserRoles.beginner)
+        headers = self.return_authorization_headers(beginner_user)
+
+        for i in range(5):  # when there are 5 recipes it becomes advanced
+            RecipeFactory(category_id=category.id, user_id=beginner_user.id)
+
+        other_category = CategoryFactory()
+
+        return other_category, recipe, headers
+
+    def test_update_others_recipe_category_and_difficulty_by_advanced_user(self):
+        other_category, recipe, headers = self.create_info()
+
+        data = {
+            "category_id": other_category.id,
+            "difficulty_level": "medium"
+        }
+
+        resp = self.client.put(f"/recipe/{recipe.id}", headers=headers, json=data)
+
+        self.assertEqual(resp.status_code, 403)
+        expected_message = {
+            "message": "Advanced users cannot change category_id"
+        }
+        self.assertEqual(resp.json, expected_message)
+
+    def test_update_others_recipe_difficulty_by_advanced_user(self):
+        other_category, recipe, headers = self.create_info()
+
+        data = {
+            "difficulty_level": "medium"
+        }
+
+        resp = self.client.put(f"/recipe/{recipe.id}", headers=headers, json=data)
+
+        self.assertEqual(resp.status_code, 200)
+        expected_message = f"Recipe named '{recipe.recipe_name}' has been updated"
+        self.assertEqual(resp.json, expected_message)
+
+
+class TestDeleteRecipe(APIBaseTestCase):
+
     def test_recipe_delete_success(self):
         recipe, headers, user = self.create_recipe()
 
@@ -175,14 +361,4 @@ class TestRecipe(APIBaseTestCase):
         self.assertEqual(len(recipes), 0)
 
         expected_message = f"Recipe named '{recipe.recipe_name}' has been deleted"
-        self.assertEqual(resp.json, expected_message)
-
-    def test_get_single_recipe(self):
-        recipe, headers, user = self.create_recipe()
-
-        resp = self.client.get(f"/recipe/{recipe.id}", headers=headers)
-
-        self.assertEqual(resp.status_code, 200)
-
-        expected_message = ResponseRecipeSchema().dump(recipe)
         self.assertEqual(resp.json, expected_message)

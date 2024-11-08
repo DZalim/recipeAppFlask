@@ -6,8 +6,7 @@ from tests.base import APIBaseTestCase
 from tests.factories import UserFactory, CategoryFactory, RecipeFactory
 
 
-class TestCategory(APIBaseTestCase):
-
+class TestCategorySchemaFields(APIBaseTestCase):
     def test_category_schema_missing_fields(self):
         user = UserFactory(role=UserRoles.admin)
         headers = self.return_authorization_headers(user)
@@ -49,9 +48,6 @@ class TestCategory(APIBaseTestCase):
 
         categories = CategoryModel.query.all()
         self.assertEqual(len(categories), 0)
-
-    def test_category_create(self):
-        self.create_category()
 
     def test_category_schema_same_name(self):
         category, category_user_header = self.create_category()
@@ -95,6 +91,23 @@ class TestCategory(APIBaseTestCase):
             expected_message = {"message": "Category Not Found"}
             self.assertEqual(resp.json, expected_message)
 
+
+class TestCategory(APIBaseTestCase):
+    def test_get_category(self):
+        categories = []
+
+        for i in range(5):
+            category = CategoryFactory()
+            categories.append(category)
+
+        resp = self.client.get("/categories")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json, CategoryResponseSchema(many=True).dump(categories))
+
+    def test_category_create(self):
+        self.create_category()
+
     def test_category_update_success(self):
         category, category_user_header = self.create_category()
 
@@ -126,24 +139,12 @@ class TestCategory(APIBaseTestCase):
         expected_message = f"Category named '{category.category_name}' has been deleted"
         self.assertEqual(resp.json, expected_message)
 
-    def test_get_category(self):
-        categories = []
-
-        for i in range(5):
-            category = CategoryFactory()
-            categories.append(category)
-
-        resp = self.client.get("/categories")
-
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json, CategoryResponseSchema(many=True).dump(categories))
-
     def test_get_categories_recipes(self):
         category = self.create_category()[0]
 
         recipes = []
         for i in range(5):
-            user = UserFactory()
+            user = UserFactory(role=UserRoles.beginner)
             recipe = RecipeFactory(category_id=category.id, user_id=user.id)
 
             recipes.append(recipe)

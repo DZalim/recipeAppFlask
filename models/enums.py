@@ -11,6 +11,7 @@ class ProfileStatus(enum.Enum):
     active = "active"
     inactive = "inactive"
 
+
 class RecipeDifficultyLevel(enum.Enum):
     easy = "easy"
     medium = "medium"

@@ -5,7 +5,6 @@ from models.mixins import TimestampMixinModel
 
 
 class CategoryModel(TimestampMixinModel):
-
     __tablename__ = "categories"
 
     id: Mapped[int] = mapped_column(
