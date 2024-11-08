@@ -60,7 +60,7 @@ jobs:
 
       - name: Run tests
         env:
-          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           echo "PYTHONPATH set to: $PYTHONPATH"
           echo "Current directory: $(pwd)"
