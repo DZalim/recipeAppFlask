@@ -62,6 +62,7 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
+          echo "github.workspace is: ${{ github.workspace }}"
           echo "PYTHONPATH set to: $PYTHONPATH"
           echo "Current directory: $(pwd)"
           ls -R
